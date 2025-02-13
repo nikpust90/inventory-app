@@ -7,7 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  * Клиент для работы с сервером через Retrofit.
  */
 public class ApiClient {
-    private static final String BASE_URL = "http://yourserver.com/api/"; // URL сервера
+    private static final String BASE_URL = "http://localhost:8080/api/incoming/documents"; // URL сервера
     private static Retrofit retrofit = null;
 
     /**

@@ -11,7 +11,7 @@ import com.example.inventory_app.databinding.ActivityMainBinding;
  */
 public class MainActivity extends AppCompatActivity {
 
-    private ActivityMainBinding binding; // Используется View Binding для удобного доступа к элементам интерфейса
+    private ActivityMainBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
