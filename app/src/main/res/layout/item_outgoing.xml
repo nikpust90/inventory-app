@@ -1,34 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"   
+    android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="8dp">
 
-    <TextView
-        android:id="@+id/productNameTextView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="2"
-        android:text="Product Name"
-        android:textSize="16sp"
-        android:paddingEnd="8dp" /> 
+    <!-- Поле для ввода названия продукта -->
+    <EditText
+            android:id="@+id/productNameEditText"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_weight="2"
+            android:hint="Product Name"
+            android:textSize="16sp"
+            android:paddingEnd="8dp"/>
 
-    <TextView
-        android:id="@+id/quantityTextView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Quantity"
-        android:textSize="16sp"
-        android:paddingEnd="8dp" />
+    <!-- Поле для ввода количества -->
+    <EditText
+            android:id="@+id/quantityEditText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Quantity"
+            android:textSize="16sp"
+            android:paddingEnd="8dp"/>
 
-    <TextView
-        android:id="@+id/barcodeTextView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="2"
-        android:text="Barcode"
-        android:textSize="16sp" />
+    <!-- Поле для ввода штрих-кода -->
+    <EditText
+            android:id="@+id/barcodeEditText"
+            android:layout_width="0dp"
+            android:layout_height="57dp"
+            android:layout_weight="2"
+            android:hint="Barcode"
+            android:textSize="16sp"/>
 
+    <!-- Кнопка для сохранения изменений -->
+    <Button
+        android:id="@+id/saveButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Save" />
 </LinearLayout>
