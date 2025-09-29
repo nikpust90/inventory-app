@@ -1,28 +1,27 @@
 package com.example.inventory_app;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+
 /**
  * Модель данных для элемента инвентаризации.
  */
-public class InventoryItem {
-    private String id;
-    private String name;
-    private int quantity;
+public class InventoryItem implements Serializable {
+    private String nomenklatura; // Название товара
+    private String seriya;       // Серия, которую мы будем сканировать
+    private int kolichestvo;     // План
+    private int kolichestvoFakt; // Факт (изначально 0)
 
-    public InventoryItem(String id, String name, int quantity) {
-        this.id = id;
-        this.name = name;
-        this.quantity = quantity;
+    public <E> InventoryItem(ArrayList<E> es) {
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
+    // Геттеры и сеттеры
+    public String getNomenklatura() { return nomenklatura; }
+    public void setNomenklatura(String nomenklatura) { this.nomenklatura = nomenklatura; }
+    public String getSeriya() { return seriya; }
+    public void setSeriya(String seriya) { this.seriya = seriya; }
+    public int getKolichestvo() { return kolichestvo; }
+    public void setKolichestvo(int kolichestvo) { this.kolichestvo = kolichestvo; }
+    public int getKolichestvoFakt() { return kolichestvoFakt; }
+    public void setKolichestvoFakt(int kolichestvoFakt) { this.kolichestvoFakt = kolichestvoFakt; }
 }

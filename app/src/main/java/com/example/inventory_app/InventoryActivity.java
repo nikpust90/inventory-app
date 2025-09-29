@@ -1,105 +1,139 @@
 package com.example.inventory_app;
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.util.Log;
-import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import com.example.inventory_app.databinding.ActivityInventoryBinding;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import com.example.inventory_app.databinding.ActivityDocumentBinding;
+import com.google.zxing.integration.android.IntentIntegrator;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import java.util.ArrayList;
 
 public class InventoryActivity extends AppCompatActivity {
 
-    private ActivityInventoryBinding binding;
-    private BarcodeReceiver barcodeReceiver;
+    private ActivityDocumentBinding binding;
+    private ApiService apiService;
+    private InventoryItem adapter; // Адаптер для списка позиций
+    private InventoryDocument currentDocument; // Текущий документ, с которым работаем
 
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // Инициализация View Binding
-        binding = ActivityInventoryBinding.inflate(getLayoutInflater());
+        binding = ActivityDocumentBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Логирование для проверки инициализации
-        Log.d("InventoryActivity", "onCreate called");
+        apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
 
-        // Инициализация BroadcastReceiver
-        barcodeReceiver = new BarcodeReceiver(binding.scannedBarcodeText);
+        // Получаем ID документа из Intent
+        String documentId = getIntent().getStringExtra("DOCUMENT_ID");
 
-        // Регистрация BroadcastReceiver для получения данных от сканера
-        IntentFilter filter = new IntentFilter("com.xcheng.scanner.action.BARCODE_DECODING_BROADCAST");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            registerReceiver(barcodeReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(barcodeReceiver, filter);
+        setupRecyclerView();
+
+        // Загружаем данные документа
+        if (documentId != null) {
+            loadDocumentDetails(documentId);
         }
 
-        Log.d("InventoryActivity", "BroadcastReceiver registered");
+        binding.fabScan.setOnClickListener(v -> {
+            new IntentIntegrator(this).initiateScan();
+        });
 
-        // Установка начального текста
-        binding.scannedBarcodeText.setText("Ожидание сканирования...");
+        binding.sendButton.setOnClickListener(v -> {
+            if (currentDocument != null) {
+                sendDocumentToServer();
+            }
+        });
+    }
+
+    private void setupRecyclerView() {
+        adapter = new InventoryItem(new ArrayList<>());
+        binding.itemsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        binding.itemsRecyclerView.setAdapter(adapter);
+    }
+
+    private void loadDocumentDetails(String documentId) {
+        apiService.getInventoryDocumentById(documentId).enqueue(new Callback<InventoryDocument>() {
+            @Override
+            public void onResponse(Call<InventoryDocument> call, Response<InventoryDocument> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    currentDocument = response.body();
+                    // Передаем список позиций в адаптер
+                    adapter.updateItems(currentDocument.getItems());
+                } else {
+                    Toast.makeText(InventoryActivity.this, "Не удалось загрузить документ", Toast.LENGTH_SHORT).show();
+                }
+            }
+            @Override
+            public void onFailure(Call<InventoryDocument> call, Throwable t) {
+                Toast.makeText(InventoryActivity.this, "Ошибка сети", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        // Отмена регистрации BroadcastReceiver при уничтожении активности
-        if (barcodeReceiver != null) {
-            unregisterReceiver(barcodeReceiver);
-            Log.d("InventoryActivity", "BroadcastReceiver unregistered");
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (result != null && result.getContents() != null) {
+            String scannedBarcode = result.getContents();
+            processScan(scannedBarcode);
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
         }
     }
 
-    /**
-     * Вложенный класс для обработки полученных штрих-кодов.
-     */
-    public static class BarcodeReceiver extends BroadcastReceiver {
-        private final TextView textView;
+    private void processScan(String scannedBarcode) {
+        if (currentDocument == null || currentDocument.getItems() == null) return;
 
-        public BarcodeReceiver(TextView textView) {
-            this.textView = textView;
+        boolean found = false;
+        for (int i = 0; i < currentDocument.getItems().size(); i++) {
+            InventoryItem item = currentDocument.getItems().get(i);
+
+            // Ищем совпадение по полю "серия"
+            if (item.getSeriya().equals(scannedBarcode)) {
+                // Нашли! Увеличиваем фактическое количество.
+                item.setKolichestvoFakt(item.getKolichestvoFakt() + 1);
+
+                // Обновляем только измененный элемент в списке для лучшей производительности
+                adapter.notifyItemChanged(i);
+
+                showResultDialog("Серия найдена!", "Товар: " + item.getNomenklatura());
+                found = true;
+                break; // Выходим из цикла, т.к. нашли совпадение
+            }
         }
 
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            // Логирование для проверки получаемого Intent
-            Log.d("BarcodeReceiver", "Received Intent: " + intent.toString());
+        if (!found) {
+            // Если после цикла ничего не нашли
+            showResultDialog("Ошибка", "Серия " + scannedBarcode + " не найдена в этом документе.");
+        }
+    }
 
-            // Логируем все дополнительные данные (extras)
-            Bundle extras = intent.getExtras();
-            if (extras != null) {
-                for (String key : extras.keySet()) {
-                    Log.d("BarcodeReceiver", "Key: " + key + ", Value: " + extras.get(key));
+    private void sendDocumentToServer() {
+        apiService.updateInventoryDocument(currentDocument).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(InventoryActivity.this, "Документ успешно отправлен!", Toast.LENGTH_LONG).show();
+                    finish(); // Закрываем активити после успешной отправки
+                } else {
+                    Toast.makeText(InventoryActivity.this, "Ошибка отправки", Toast.LENGTH_SHORT).show();
                 }
             }
-
-            // Получаем штрих-код из Intent
-            String barcode = intent.getStringExtra("EXTRA_BARCODE_DECODING_DATA");
-            Log.d("BarcodeReceiver", "Received barcode: " + barcode);
-
-            if (barcode != null && textView != null) {
-                // Обновляем UI в основном потоке
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    textView.setText("Отсканирован код: " + barcode);
-                });
-            } else {
-                Log.d("BarcodeReceiver", "No barcode received or textView is null");
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    if (textView != null) {
-                        textView.setText("Не удалось получить штрихкод.");
-                    }
-                });
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(InventoryActivity.this, "Ошибка сети при отправке", Toast.LENGTH_SHORT).show();
             }
-        }
+        });
+    }
+
+    private void showResultDialog(String title, String message) {
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show();
     }
 }
