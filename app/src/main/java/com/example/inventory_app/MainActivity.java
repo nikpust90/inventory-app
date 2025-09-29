@@ -11,7 +11,7 @@ import com.example.inventory_app.databinding.ActivityMainBinding;
  */
 public class MainActivity extends AppCompatActivity {
 
-    private ActivityMainBinding binding; // Используется View Binding для удобного доступа к элементам интерфейса
+    private ActivityMainBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +25,18 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // Переход в активность инвентаризации
                 startActivity(new Intent(MainActivity.this, InventoryActivity.class));
+            }
+        });
+
+        // Обработчик кнопки для просмотра исходящего документа
+        binding.viewOutgoingDocumentButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Переход в активность исходящего документа
+                Long documentId = 1L; // Замените на реальный ID документа
+                Intent intent = new Intent(MainActivity.this, OutgoingDocumentActivity.class);
+                intent.putExtra("DOCUMENT_ID", documentId);  // передаем ID документа
+                startActivity(intent);
             }
         });
     }

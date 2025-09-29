@@ -2,8 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.example.inventory_app">
 
-    <!-- Разрешение на использование камеры (если сканер через камеру) -->
-<!--    <uses-permission android:name="android.permission.CAMERA" />-->
+    <!-- Разрешение на использование камеры -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Разрешение на использование интернета -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Разрешение на чтение/запись во внешнее хранилище (если необходимо) -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <application
             android:icon="@drawable/ic_launcher"
@@ -27,12 +32,15 @@
                 android:name=".InventoryActivity"
                 android:exported="false"/>
 
+        <activity
+                android:name=".OutgoingDocumentActivity"
+                android:exported="false"/>
+
         <!-- Добавляем BroadcastReceiver для сканера -->
         <receiver android:name=".BarcodeReceiver"
                   android:exported="false">
             <intent-filter>
-                <!-- Здесь должен быть action, который отправляет сканер -->
-                <action android:name="com.android.SCAN" />
+                <action android:name="com.xcheng.scanner.action.BARCODE_DECODING_BROADCAST" /> <!-- Проверьте правильный action -->
             </intent-filter>
         </receiver>
 
