@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 
 public class ApiClient {
-
+    //
     private static final String BASE_URL = "http://192.168.1.76:8080";
     private static final String BEARER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJKV1Qgd2l0aCB1c2VyIGRldGFpbHMiLCJ1c2VybmFtZSI6InVzZXJfdGVzdCIsInJvbGUiOiJST0xFX0FETUlOIiwiaWF0IjoxNzM5NTQyOTUwLCJpc3MiOiJNYXhpbWEgU2Nob29sIiwiZXhwIjoxNzc1ODMwOTUwfQ.nEqtAFmH6ol8kWp-71Bqt8fUZF3Q8Y2lF3j8IO8X-VI"; // Ваш токен
 
