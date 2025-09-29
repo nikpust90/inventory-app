@@ -44,4 +44,15 @@ public class ApiClient {
         }
         return retrofit;
     }
+
+    public static Retrofit getRetrofitInstance() {
+        if (retrofit == null) {
+            retrofit = new Retrofit.Builder()
+                    .baseUrl(BASE_URL)
+                    // Используем Gson для преобразования JSON в Java-объекты
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+        }
+        return retrofit;
+    }
 }

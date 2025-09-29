@@ -1,11 +1,20 @@
-package com.example.inventory_app;
+package com.example.inventory_app.activity;
 
+import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import com.example.inventory_app.ApiClient;
+import com.example.inventory_app.ApiService;
+import com.example.inventory_app.InventoryDocument;
+import com.example.inventory_app.InventoryItem;
+import com.example.inventory_app.adapters.InventoryItemAdapter;
 import com.example.inventory_app.databinding.ActivityDocumentBinding;
 import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+import org.jetbrains.annotations.Nullable;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -16,7 +25,7 @@ public class InventoryActivity extends AppCompatActivity {
 
     private ActivityDocumentBinding binding;
     private ApiService apiService;
-    private InventoryItem adapter; // Адаптер для списка позиций
+    private InventoryItemAdapter adapter; // Адаптер для списка позиций
     private InventoryDocument currentDocument; // Текущий документ, с которым работаем
 
     @Override
@@ -25,7 +34,7 @@ public class InventoryActivity extends AppCompatActivity {
         binding = ActivityDocumentBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
+        apiService = ApiClient.getRetrofitInstance().create(ApiService.class);
 
         // Получаем ID документа из Intent
         String documentId = getIntent().getStringExtra("DOCUMENT_ID");
@@ -49,7 +58,7 @@ public class InventoryActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView() {
-        adapter = new InventoryItem(new ArrayList<>());
+        adapter = new InventoryItemAdapter(new ArrayList<>());
         binding.itemsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         binding.itemsRecyclerView.setAdapter(adapter);
     }

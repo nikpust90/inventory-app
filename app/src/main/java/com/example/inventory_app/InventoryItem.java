@@ -12,8 +12,6 @@ public class InventoryItem implements Serializable {
     private int kolichestvo;     // План
     private int kolichestvoFakt; // Факт (изначально 0)
 
-    public <E> InventoryItem(ArrayList<E> es) {
-    }
 
     // Геттеры и сеттеры
     public String getNomenklatura() { return nomenklatura; }

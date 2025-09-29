@@ -15,4 +15,6 @@ public class InventoryDocument implements Serializable {
     public void setDate(String date) { this.date = date; }
     public List<InventoryItem> getItems() { return items; }
     public void setItems(List<InventoryItem> items) { this.items = items; }
+
+
 }

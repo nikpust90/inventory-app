@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <!-- Здесь можно добавить переменные для binding, если нужно, но в вашем коде они не используются напрямую -->
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="?android:attr/selectableItemBackground"
+        tools:context=".adapters.InventoryItemAdapter"> <!-- Для preview в Android Studio -->
+
+        <!-- Номенклатура (основное название) -->
+        <TextView
+            android:id="@+id/textViewNomenclature"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:text="Номенклатура"
+            tools:text="Номенклатура: Пример товара" />
+
+        <!-- Серия -->
+        <TextView
+            android:id="@+id/textViewSerial"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            android:text="Серия"
+            tools:text="Серия: ABC123" />
+
+        <!-- Количество (план) -->
+        <TextView
+            android:id="@+id/textViewQuantity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            android:text="Количество"
+            tools:text="Количество: 10" />
+
+        <!-- Количество факт -->
+        <TextView
+            android:id="@+id/textViewQuantityFact"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/colorAccent" 
+            android:text="Количество факт"
+            tools:text="Количество факт: 5" />
+
+    </LinearLayout>
+</layout>

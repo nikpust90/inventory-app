@@ -18,6 +18,11 @@
         android:layout_height="wrap_content"
         android:text="Начать инвентаризацию"/>
 
+	<Button
+		android:id="@+id/viewInventoryListButton"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Просмотреть список документов инвентаризации" />
     <!-- Добавлена новая кнопка для перехода в исходящий документ -->
     <Button
         android:id="@+id/viewOutgoingDocumentButton"
