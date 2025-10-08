@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.inventory.InventoryDetailFragment"> <!-- Укажите правильный путь к вашему фрагменту -->
+    tools:context=".activity.InventoryActivity">
 
     <!-- Список позиций документа -->
     <!-- clipToPadding="false" и paddingBottom нужны, чтобы последний элемент не перекрывался кнопкой FAB -->

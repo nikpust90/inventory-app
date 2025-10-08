@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.example.inventory_app">
+          xmlns:tools="http://schemas.android.com/tools" package="com.example.inventory_app">
 
     <!-- Разрешение на использование камеры -->
     <uses-permission android:name="android.permission.CAMERA" />
@@ -10,13 +10,16 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <application
             android:icon="@drawable/ic_launcher1"
             android:roundIcon="@drawable/ic_launcher_round"
             android:allowBackup="true"
             android:label="@string/app_name"
             android:supportsRtl="true"
-            android:theme="@style/Theme.InventoryApp">
+            android:theme="@style/Theme.InventoryApp"
+            android:usesCleartextTraffic="true">
 
         <activity
                 android:name=".MainActivity"
@@ -33,8 +36,11 @@
                 android:exported="false"/>
 
         <activity
-                android:name=".OutgoingDocumentActivity"
+                android:name=".activity.InventoryListActivity"
                 android:exported="false"/>
+
+        <activity android:name=".activity.InventoryActivity"
+                  android:exported="true" />
 
         <!-- Добавляем BroadcastReceiver для сканера -->
         <receiver android:name=".BarcodeReceiver"

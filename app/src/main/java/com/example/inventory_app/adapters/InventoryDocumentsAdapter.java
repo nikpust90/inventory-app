@@ -65,10 +65,63 @@ public class InventoryDocumentsAdapter extends RecyclerView.Adapter<InventoryDoc
         }
 
         public void bind(InventoryDocument document) {
-            // Устанавливаем текст в TextView (предполагаем, что есть getTitle(), getDate() или другие поля)
-            binding.textViewTitle.setText(document.getTitle()); // Например, "Документ #1"
-            // Если есть другие поля, добавьте аналогично, напр.:
-            binding.textViewDate.setText("Дата: " + document.getDate());
+            // Заголовок
+            String title = "Инв.";
+            if (document.getId() != null && !document.getId().isEmpty()) {
+                title += " #" + document.getId().substring(0, Math.min(6, document.getId().length()));
+            }
+            binding.textViewTitle.setText(title);
+
+            // Номер документа
+            if (document.getDocumentNumber() != null && !document.getDocumentNumber().isEmpty()) {
+                binding.textViewDocumentNumber.setText("№ " + document.getDocumentNumber());
+            } else {
+                binding.textViewDocumentNumber.setText("№ не указан");
+            }
+
+            // Склад
+            if (document.getWarehouse() != null && !document.getWarehouse().isEmpty()) {
+                binding.textViewWarehouse.setText("Склад: " + document.getWarehouse());
+            } else {
+                binding.textViewWarehouse.setText("Склад не указан");
+            }
+
+            // Дата + количество
+            StringBuilder subtitle = new StringBuilder();
+            if (document.getDate() != null && !document.getDate().isEmpty()) {
+                try {
+                    String formattedDate = formatDate(document.getDate());
+                    subtitle.append(formattedDate);
+                } catch (Exception e) {
+                    subtitle.append(document.getDate());
+                }
+            } else {
+                subtitle.append("Без даты");
+            }
+
+            int itemsCount = document.getItems() != null ? document.getItems().size() : 0;
+            subtitle.append(" • ").append(itemsCount).append(" шт.");
+
+            binding.textViewDate.setText(subtitle.toString());
+        }
+
+        // Вспомогательный метод для форматирования даты
+        private String formatDate(String dateString) {
+            // Если дата уже в нормальном формате, просто возвращаем
+            if (dateString.length() <= 20) {
+                return dateString;
+            }
+
+            // Если дата в формате ISO (2024-01-15T10:30:00), обрезаем время
+            if (dateString.contains("T")) {
+                return dateString.split("T")[0];
+            }
+
+            return dateString;
         }
     }
+
+
+
 }
+

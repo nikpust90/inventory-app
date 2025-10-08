@@ -22,16 +22,19 @@ public interface ApiService {
     Call<InventoryDocument> getOutgoingDocumentById(@Path("id") Long documentId);
 
 
-    // 1. Получение списка всех документов инвентаризации
-    @GET("inventory_documents") // Замените на ваш URL
+    // Получение списка всех документов инвентаризации
+    // Будет вызывать: GET http://89.108.72.168/Stavtrack_UNF/hs/inventory_documents/
+    @GET("inventory_documents/")
     Call<List<InventoryDocument>> getInventoryDocuments();
 
-    // 2. Получение одного документа со всеми его позициями по ID
-    @GET("/api/inventory/documents/{id}") // Замените на ваш URL
+    // Получение одного документа по ID
+    // Будет вызывать: GET http://89.108.72.168/Stavtrack_UNF/hs/inventory_documents/{id}
+    @GET("inventory_documents/{id}")
     Call<InventoryDocument> getInventoryDocumentById(@Path("id") String documentId);
 
-    // 3. Отправка обновленного документа на сервер
-    @POST("/api/inventory/documents/update") // Замените на ваш URL
-    Call<Void> updateInventoryDocument(@Body InventoryDocument document); // Отправляем весь объект в теле запроса
+    // Отправка обновленного документа
+    // Будет вызывать: POST http://89.108.72.168/Stavtrack_UNF/hs/inventory_documents/update
+    @POST("inventory_documents/update")
+    Call<Void> updateInventoryDocument(@Body InventoryDocument document);
 
 }

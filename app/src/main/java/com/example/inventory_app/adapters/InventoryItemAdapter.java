@@ -17,6 +17,7 @@ public class InventoryItemAdapter extends RecyclerView.Adapter<InventoryItemAdap
         this.items = items;
     }
 
+
     /**
      * Метод для обновления списка элементов и перерисовки RecyclerView.
      */
@@ -64,10 +65,21 @@ public class InventoryItemAdapter extends RecyclerView.Adapter<InventoryItemAdap
 
         public void bind(InventoryItem item) {
             // Устанавливаем текст в TextView
-            binding.textViewNomenclature.setText(item.getNomenklatura());
-            binding.textViewSerial.setText("Серия: " + item.getSeriya());
-            binding.textViewQuantity.setText(String.valueOf(item.getKolichestvo())); // План
-            binding.textViewQuantityFact.setText(String.valueOf(item.getKolichestvoFakt())); // Факт
+            binding.textViewNomenclature.setText(item.getNomenklatura().getName());
+            binding.textViewSerial.setText("Серия: " + item.getSeriya().getName());
+            binding.textViewQuantity.setText("План: " + item.getKolichestvo());
+            binding.textViewQuantityFact.setText("Факт: " + item.getKolichestvoFakt());
+
+            // Подсветка найденных серий
+            if (item.isFound()) {
+                binding.getRoot().setBackgroundColor(
+                        binding.getRoot().getContext().getResources().getColor(android.R.color.holo_green_light)
+                );
+            } else {
+                binding.getRoot().setBackgroundColor(
+                        binding.getRoot().getContext().getResources().getColor(android.R.color.transparent)
+                );
+            }
         }
     }
 }
