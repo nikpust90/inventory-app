@@ -10,7 +10,14 @@ public class Seriya implements Serializable {
     @SerializedName("seriya")
     private String name;
 
+    private String imei;
+
     // Геттеры и сеттеры
+    public String getImei() {
+        return imei;
+    }
+    public void setImei(String imei) { this.imei = imei; }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 

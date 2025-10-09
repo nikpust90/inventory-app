@@ -4,6 +4,8 @@
 
     <!-- Разрешение на использование камеры -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
     <!-- Разрешение на использование интернета -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Разрешение на чтение/запись во внешнее хранилище (если необходимо) -->
@@ -31,9 +33,9 @@
             </intent-filter>
         </activity>
 
-        <activity
-                android:name=".InventoryActivityTest"
-                android:exported="false"/>
+<!--        <activity-->
+<!--                android:name=".InventoryActivityTest"-->
+<!--                android:exported="false"/>-->
 
         <activity
                 android:name=".activity.InventoryListActivity"

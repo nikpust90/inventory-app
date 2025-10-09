@@ -9,24 +9,14 @@
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Привет, ТСД!"
+        android:text="Stavtrack, ТСД!"
         android:textSize="18sp"/>
 		
-    <Button
-        android:id="@+id/startInventoryButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Начать инвентаризацию"/>
 
 	<Button
 		android:id="@+id/viewInventoryListButton"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:text="Просмотреть список документов инвентаризации" />
-    <!-- Добавлена новая кнопка для перехода в исходящий документ -->
-    <Button
-        android:id="@+id/viewOutgoingDocumentButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Посмотреть исходящий документ"/>
+
 </LinearLayout>

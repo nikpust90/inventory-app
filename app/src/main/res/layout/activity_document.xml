@@ -7,45 +7,53 @@
     android:layout_height="match_parent"
     tools:context=".activity.InventoryActivity">
 
-    <!-- Список позиций документа -->
-    <!-- clipToPadding="false" и paddingBottom нужны, чтобы последний элемент не перекрывался кнопкой FAB -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/itemsRecyclerView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:paddingBottom="8dp"
-        android:clipToPadding="false"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/sendButton"
-        tools:listitem="@layout/list_item_inventory" />
+    <!-- Встроенный сканер, ИЗНАЧАЛЬНО СКРЫТ -->
+    <com.journeyapps.barcodescanner.DecoratedBarcodeView
+		android:id="@+id/barcode_scanner"
+		android:layout_width="0dp"
+		android:layout_height="250dp"
+		android:visibility="gone"
+		app:layout_constraintTop_toTopOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintEnd_toEndOf="parent"
+		tools:visibility="visible"/>
 
-    <!-- Кнопка для отправки документа на сервер -->
-    <!-- Используем MaterialButton для современного вида и добавляем отступы -->
-    <com.google.android.material.button.MaterialButton
+	<Button
         android:id="@+id/sendButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:paddingVertical="12dp"
         android:text="Отправить документ"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"/>
+		
+    <!-- ВАШ RecyclerView, мы просто изменили его верхнюю привязку -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/itemsRecyclerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:paddingBottom="8dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintTop_toBottomOf="@id/barcode_scanner" 
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/sendButton"
+        tools:listitem="@layout/list_item_inventory" />
 
-    <!-- Плавающая кнопка для запуска сканирования -->
+    <!-- Кнопка для управления сканером -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_scan"
+        android:id="@+id/fabScan"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:contentDescription="Сканировать"
-        app:srcCompat="@android:drawable/ic_menu_camera"
+        android:src="@android:drawable/ic_menu_camera"
+        app:tint="@android:color/white"
         app:layout_constraintBottom_toTopOf="@id/sendButton"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="Сканировать" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

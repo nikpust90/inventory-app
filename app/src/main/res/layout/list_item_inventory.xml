@@ -1,6 +1,6 @@
-<com.google.android.material.card.MaterialCardView 
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:app="http://schemas.android.com/apk/res-auto"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -25,34 +25,50 @@
             android:textColor="@android:color/black"
             tools:text="Пример товара" />
 
-        <!-- Серия -->
-        <TextView
-            android:id="@+id/textViewSerial"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textSize="14sp"
-            android:textColor="@android:color/darker_gray"
-            tools:text="Серия: ABC123" />
+		<!-- Серия (тёмно-серая, 14sp) -->
+		<TextView
+			android:id="@+id/textViewSerial"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="4dp"
+			android:textSize="14sp"
+			android:textStyle="normal"
+			android:textColor="#555555"
+			tools:text="Серия: ABC123" />
 
-        <!-- Количество план -->
-        <TextView
-            android:id="@+id/textViewQuantity"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textSize="14sp"
-            tools:text="План: 10" />
+		<!-- IMEI (меньше, светлее, под Серией) -->
+		<TextView
+			android:id="@+id/textViewImei"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="2dp"
+			android:textSize="12sp"
+			android:textColor="@android:color/darker_gray"
+			tools:text="IMEI: 123456789" />
 
-        <!-- Количество факт -->
-        <TextView
-            android:id="@+id/textViewQuantityFact"
+        <!-- Факт и План в одной строке -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:textSize="14sp"
-            android:textColor="@color/colorAccent"
-            tools:text="Факт: 5" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textViewQuantityFact"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textColor="@color/colorAccent"
+                tools:text="Факт: 5" />
+
+            <TextView
+                android:id="@+id/textViewQuantity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:textSize="14sp"
+                tools:text="План: 10" />
+        </LinearLayout>
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

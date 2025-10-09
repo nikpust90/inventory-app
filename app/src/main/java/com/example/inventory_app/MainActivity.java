@@ -21,13 +21,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         // Обработчик кнопки "Начать инвентаризацию"
-        binding.startInventoryButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Переход в активность инвентаризации
-                startActivity(new Intent(MainActivity.this, InventoryActivityTest.class));
-            }
-        });
+//        binding.startInventoryButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                // Переход в активность инвентаризации
+//                startActivity(new Intent(MainActivity.this, InventoryActivityTest.class));
+//            }
+//        });
 
         // Обработчик кнопки для просмотра списка документов инвентаризации
         // Предполагаем, что в layout activity_main.xml есть кнопка с id="viewInventoryListButton"

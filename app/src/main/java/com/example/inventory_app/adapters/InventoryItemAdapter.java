@@ -67,15 +67,35 @@ public class InventoryItemAdapter extends RecyclerView.Adapter<InventoryItemAdap
             // Устанавливаем текст в TextView
             binding.textViewNomenclature.setText(item.getNomenklatura().getName());
             binding.textViewSerial.setText("Серия: " + item.getSeriya().getName());
+            binding.textViewImei.setText("imei: " + item.getSeriya().getImei());
             binding.textViewQuantity.setText("План: " + item.getKolichestvo());
             binding.textViewQuantityFact.setText("Факт: " + item.getKolichestvoFakt());
 
             // Подсветка найденных серий
-            if (item.isFound()) {
+//            if (item.isFound()) {
+//                binding.getRoot().setBackgroundColor(
+//                        binding.getRoot().getContext().getResources().getColor(android.R.color.holo_green_light)
+//                );
+//            } else {
+//                binding.getRoot().setBackgroundColor(
+//                        binding.getRoot().getContext().getResources().getColor(android.R.color.transparent)
+//                );
+//            }
+            // ПОДСВЕТКА ПРИ ОТКРЫТИИ ДОКУМЕНТА: зеленый если факт >= плану
+            boolean isCompleted = item.getKolichestvoFakt() >= item.getKolichestvo();
+
+            if (isCompleted) {
+                // Зеленый - план выполнен (при открытии документа или после сканирования)
                 binding.getRoot().setBackgroundColor(
                         binding.getRoot().getContext().getResources().getColor(android.R.color.holo_green_light)
                 );
+            } else if (item.isFound()) {
+                // Голубой - найден при сканировании, но план еще не выполнен
+                binding.getRoot().setBackgroundColor(
+                        binding.getRoot().getContext().getResources().getColor(android.R.color.holo_blue_light)
+                );
             } else {
+                // Прозрачный - не найден и план не выполнен
                 binding.getRoot().setBackgroundColor(
                         binding.getRoot().getContext().getResources().getColor(android.R.color.transparent)
                 );
