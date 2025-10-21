@@ -24,7 +24,7 @@
             android:usesCleartextTraffic="true">
 
         <activity
-                android:name=".MainActivity"
+                android:name=".activity.LoginActivity"
                 android:exported="true">
 
             <intent-filter>
@@ -36,6 +36,11 @@
 <!--        <activity-->
 <!--                android:name=".InventoryActivityTest"-->
 <!--                android:exported="false"/>-->
+
+        <activity
+                android:name=".MainActivity"
+                android:exported="false">
+        </activity>
 
         <activity
                 android:name=".activity.InventoryListActivity"

@@ -14,6 +14,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.example.inventory_app.*;
 import com.example.inventory_app.adapters.InventoryItemAdapter;
 import com.example.inventory_app.databinding.ActivityDocumentBinding;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import androidx.appcompat.app.AlertDialog;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,6 +52,8 @@ public class InventoryActivity extends AppCompatActivity {
 
     private static final int CAMERA_PERMISSION_REQUEST = 1001;
     private boolean hasCameraPermission = false;
+
+    private RecyclerView recyclerView;
 
 
     // НОВЫЙ ОБЪЕКТ: Callback, который будет получать результат сканирования непрерывно
@@ -127,27 +131,7 @@ public class InventoryActivity extends AppCompatActivity {
     }
 
     private void initializeScanner() {
-//        if (hasCameraPermission) {
-//            barcodeView = binding.barcodeScanner;
-//
-//            // Настройки сканера
-//            CameraSettings settings = new CameraSettings();
-//            settings.setFocusMode(CameraSettings.FocusMode.AUTO);
-//            settings.setAutoFocusEnabled(true);
-//
-//            barcodeView.getBarcodeView().setCameraSettings(settings);
-//            //barcodeView.getBarcodeView().setStatusText("");
-//            //barcodeView.setStatusText("Наведите камеру на штрихкод");
-//
-//            // Включите декодирование всех форматов
-//            Collection<BarcodeFormat> formats = Arrays.asList(
-//                    BarcodeFormat.QR_CODE,
-//                    BarcodeFormat.CODE_128,
-//                    BarcodeFormat.EAN_13,
-//                    BarcodeFormat.UPC_A
-//            );
-//            barcodeView.getBarcodeView().setDecoderFactory(new DefaultDecoderFactory(formats));
-//        }
+
         if (hasCameraPermission) {
             barcodeView = binding.barcodeScanner;
 
@@ -242,35 +226,25 @@ public class InventoryActivity extends AppCompatActivity {
         }
     }
 
-    // УДАЛЕНО: Этот метод больше не нужен, т.к. мы не используем отдельную активность для сканирования
-    /*
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-        if (result != null && result.getContents() != null) {
-            processScan(result.getContents());
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
-        }
-    }
-    */
-
     // ИЗМЕНЕНО: Теперь этот метод вызывается напрямую из BarcodeCallback
+    // ИЗМЕНЕНО: Новая, более гибкая логика обработки сканирования
     private void processScan(String scannedBarcode) {
         if (currentDocument == null || currentDocument.getItems() == null || scannedBarcode == null || scannedBarcode.trim().isEmpty()) {
             Toast.makeText(this, "Документ не готов или штрихкод пуст", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // 1. Подготовка значения для поиска (как и раньше)
         String valueToSearch;
         if (scannedBarcode.toLowerCase().startsWith("http")) {
-            valueToSearch = scannedBarcode.length() >= 6 ? scannedBarcode.substring(scannedBarcode.length() - 6) : scannedBarcode;
+            valueToSearch = scannedBarcode.length() >= 12 ? scannedBarcode.substring(scannedBarcode.length() - 12) : scannedBarcode;
         } else {
             valueToSearch = scannedBarcode;
         }
 
-        int foundItemIndex = -1;
+        // 2. Поиск ВСЕХ совпадений, а не первого
         List<InventoryItem> items = currentDocument.getItems();
+        List<Integer> matchingIndices = new ArrayList<>(); // Список для хранения индексов найденных позиций
 
         for (int i = 0; i < items.size(); i++) {
             InventoryItem item = items.get(i);
@@ -281,48 +255,100 @@ public class InventoryActivity extends AppCompatActivity {
                     (seriya.getImei() != null && valueToSearch.equals(seriya.getImei()));
 
             if (isMatch) {
-                foundItemIndex = i;
-                break;
+                matchingIndices.add(i); // Добавляем индекс в список, не прерываем цикл
             }
         }
 
-        if (foundItemIndex != -1) {
-            InventoryItem item = items.get(foundItemIndex);
-            //item.setKolichestvoFakt(item.getKolichestvoFakt() + 1);
-            item.setKolichestvoFakt(1);
-            item.setFound(true);
-            adapter.notifyItemChanged(foundItemIndex);
-
-            // ИЗМЕНЕНО: Вместо диалогового окна теперь Toast, звук и вибрация
-            playSuccessSound();
-            vibrateSuccess();
-            Toast.makeText(this, "Найдено: " + item.getNomenklatura().getName(), Toast.LENGTH_SHORT).show();
-        } else {
-            // ИЗМЕНЕНО: Вместо диалогового окна теперь Toast, звук и вибрация
+        // 3. Анализ результатов поиска
+        if (matchingIndices.isEmpty()) {
+            // СОВПАДЕНИЙ НЕ НАЙДЕНО
             playErrorSound();
             vibrateError();
-            Toast.makeText(this, "Ошибка: '" + valueToSearch + "' не найдено", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "Ошибка: '" + valueToSearch + "' не найдено", Toast.LENGTH_SHORT).show();
+
+        } else if (matchingIndices.size() == 1) {
+            // НАЙДЕНО РОВНО ОДНО СОВПАДЕНИЕ (стандартный сценарий)
+            processFoundItem(matchingIndices.get(0));
+
+        } else {
+            // НАЙДЕНО НЕСКОЛЬКО СОВПАДЕНИЙ
+            showNomenclatureChoiceDialog(matchingIndices, valueToSearch);
         }
 
-        // НОВЫЙ БЛОК: Задержка перед считыванием следующего кода, чтобы избежать двойных срабатываний
-        // и дать пользователю время среагировать на звук/вибрацию.
-        new android.os.Handler().postDelayed(() -> lastScannedBarcode = "", 800); // 0.8 секунды
+        // Задержка перед следующим сканированием
+        new android.os.Handler().postDelayed(() -> lastScannedBarcode = "", 800);
     }
 
-    // УДАЛЕНО: Диалоговое окно блокирует UI и мешает непрерывному сканированию
-    /*
-    private void showResultDialog(String title, String message) {
-        new AlertDialog.Builder(this)
-                .setTitle(title)
-                .setMessage(message)
-                .setPositiveButton("OK", null)
-                .show();
-    }
-    */
+    /**
+     * Обрабатывает найденную позицию: обновляет данные, адаптер и подает сигнал пользователю.
+     * @param itemIndex Индекс найденной позиции в списке currentDocument.getItems()
+     */
+    private void processFoundItem(int itemIndex) {
+        InventoryItem item = currentDocument.getItems().get(itemIndex);
 
-    // --- Методы ниже остались без изменений ---
+        // Если товар уже был найден, можно просто подать сигнал, не изменяя количество
+        if (item.isFound()) {
+            Toast.makeText(this, "Повторное сканирование: " + item.getNomenklatura().getName(), Toast.LENGTH_SHORT).show();
+            playSuccessSound(); // Просто звук успеха
+            return;
+        }
+
+        item.setKolichestvoFakt(1); // Устанавливаем факт = 1
+        item.setFound(true);      // Помечаем как найденную
+        adapter.notifyItemChanged(itemIndex);
+
+        playSuccessSound();
+        vibrateSuccess();
+        Toast.makeText(this, "Найдено: " + item.getNomenklatura().getName(), Toast.LENGTH_SHORT).show();
+
+        // Прокрутка к найденной позиции
+        recyclerView.scrollToPosition(itemIndex);
+    }
+
+    /**
+     * Показывает диалог выбора номенклатуры, когда по одному штрихкоду найдено несколько позиций.
+     * @param indices Список индексов найденных позиций.
+     * @param scannedValue Отсканированное значение для отображения в заголовке.
+     */
+    private void showNomenclatureChoiceDialog(List<Integer> indices, String scannedValue) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Найдено несколько позиций для '" + scannedValue + "'. Выберите нужную:");
+
+        // Создаем массив строк с названиями номенклатур для отображения в диалоге
+        String[] nomenclatureNames = new String[indices.size()];
+        for (int i = 0; i < indices.size(); i++) {
+            InventoryItem item = currentDocument.getItems().get(indices.get(i));
+            String name = item.getNomenklatura().getName() != null ? item.getNomenklatura().getName() : "Без имени";
+            nomenclatureNames[i] = name;
+        }
+
+        // Устанавливаем список и обработчик клика
+        builder.setItems(nomenclatureNames, (dialog, which) -> {
+            // 'which' - это индекс нажатого элемента в диалоговом окне.
+            // Он соответствует индексу в нашем списке 'indices'.
+            int chosenItemIndex = indices.get(which);
+
+            // Теперь, когда пользователь сделал выбор, обрабатываем эту позицию
+            processFoundItem(chosenItemIndex);
+
+            // ЯВНО ЗАКРЫВАЕМ ДИАЛОГ
+            dialog.dismiss();
+        });
+
+        // Добавляем кнопку "Отмена"
+        builder.setNegativeButton("Отмена", (dialog, id) -> dialog.dismiss());
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Также подадим сигнал, что что-то произошло
+        playErrorSound(); // Можно использовать звук ошибки/внимания
+        vibrateError();   // И вибрацию
+    }
 
     private void setupRecyclerView() {
+        // Мы сохраняем ссылку на RecyclerView из binding в наше поле класса.
+        recyclerView = binding.itemsRecyclerView;
         adapter = new InventoryItemAdapter(new ArrayList<>());
         binding.itemsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         binding.itemsRecyclerView.setAdapter(adapter);

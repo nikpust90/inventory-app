@@ -1,6 +1,7 @@
 package com.example.inventory_app.activity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,6 +24,7 @@ public class InventoryListActivity extends AppCompatActivity {
     private ActivityDocumentListBinding binding; // ViewBinding для доступа к элементам layout
     private ApiService apiService; // Клиент для работы с API
     private InventoryDocumentsAdapter adapter; // Адаптер для списка документов
+    private String warehouseId; // Поле для хранения ID склада
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,12 +33,31 @@ public class InventoryListActivity extends AppCompatActivity {
         binding = ActivityDocumentListBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // ✅ Получаем ID склада из SharedPreferences
+        loadUserData();
+
         // Создание экземпляра API сервиса через клиент
         apiService = ApiClient.getRetrofitInstance().create(ApiService.class);
 
         // Настройка RecyclerView и загрузка данных
         setupRecyclerView();
         loadDocuments();
+    }
+
+    private void loadUserData() {
+        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        warehouseId = prefs.getString("WAREHOUSE_ID", null);
+        String userName = prefs.getString("USER_NAME", "Пользователь");
+
+        // Можно отобразить имя пользователя в заголовке
+        setTitle("Документы (" + userName + ")");
+
+        if (warehouseId == null) {
+            // Если данных нет, что-то пошло не так. Возвращаемся на экран входа.
+            Toast.makeText(this, "Ошибка авторизации. Пожалуйста, войдите снова.", Toast.LENGTH_LONG).show();
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+        }
     }
 
     /**
@@ -56,29 +77,39 @@ public class InventoryListActivity extends AppCompatActivity {
      */
     private void loadDocuments() {
         // Выполняем асинхронный запрос к API
-        apiService.getInventoryDocuments().enqueue(new Callback<List<InventoryDocument>>() {
+        apiService.getInventoryDocuments(warehouseId, "ВРаботе").enqueue(new Callback<List<InventoryDocument>>() {
             @Override
             public void onResponse(Call<List<InventoryDocument>> call, Response<List<InventoryDocument>> response) {
-                // Проверяем успешность ответа и наличие данных
-//                if (response.isSuccessful() && response.body() != null) {
-//                    // Обновляем адаптер новыми данными
-//                    adapter.updateDocuments(response.body());
-//                } else {
-//                    // Показываем сообщение об ошибке загрузки
-//                    Toast.makeText(InventoryListActivity.this,
-//                            "Не удалось загрузить список документов", Toast.LENGTH_SHORT).show();
-//                }
+                // Проверяем, успешен ли запрос и есть ли тело ответа
                 if (response.isSuccessful() && response.body() != null) {
+                    // Запрос успешен, обновляем данные в адаптере
                     adapter.updateDocuments(response.body());
                 } else {
-                    String errorMsg = "Не удалось загрузить: код " + response.code();
-                    if (response.errorBody() != null) {
-                        try {
-                            errorMsg += " - " + response.errorBody().string();  // Показывает тело ошибки от сервера (e.g., "Unauthorized")
-                        } catch (IOException e) {
-                            errorMsg += " - Ошибка чтения тела";
+                    // Запрос неуспешен (код ответа не 2xx), обрабатываем ошибку сервера
+                    String errorMsg;
+                    try {
+                        // Пытаемся получить тело ошибки из ответа 1С
+                        if (response.errorBody() != null) {
+                            // Читаем текст ошибки, который передала 1С (например, "Склад не найден")
+                            errorMsg = "Ошибка сервера: " + response.code() + " - " + response.errorBody().string();
+                        } else {
+                            // Если тела ошибки нет, показываем только код
+                            errorMsg = "Ошибка сервера: Код " + response.code();
                         }
+                    } catch (IOException e) {
+                        // На случай, если возникла ошибка при чтении тела ответа
+                        errorMsg = "Не удалось загрузить данные. Ошибка чтения тела ответа.";
                     }
+
+                    // В зависимости от кода, можно показать более специфичное сообщение
+                    if (response.code() == 400) {
+                        // Например, для 400-го кода можно дать более понятное сообщение
+                        errorMsg = "Ошибка запроса: " + (errorMsg.contains("Не указан идентификатор склада") ? "Не указан идентификатор склада." : "Некорректные параметры.");
+                    } else if (response.code() == 404) {
+                        errorMsg = "Данные не найдены: " + (errorMsg.contains("Склад с указанным ID не найден") ? "Склад не найден." : "Ресурс не найден.");
+                    }
+
+                    // Показываем пользователю всплывающее уведомление
                     Toast.makeText(InventoryListActivity.this, errorMsg, Toast.LENGTH_LONG).show();
                 }
             }
@@ -87,9 +118,18 @@ public class InventoryListActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<List<InventoryDocument>> call, Throwable t) {
-                // Обрабатываем ошибки сети
-                Toast.makeText(InventoryListActivity.this,
-                        "Ошибка сети", Toast.LENGTH_SHORT).show();
+                // Обрабатываем ошибки, не связанные с HTTP-ответом (сеть, парсинг)
+                String errorMsg;
+                // Проверяем, является ли ошибка проблемой сети
+                if (t instanceof IOException) {
+                    errorMsg = "Ошибка сети. Проверьте подключение к интернету.";
+                } else {
+                    // Это может быть ошибка парсинга JSON или другая системная ошибка
+                    errorMsg = "Непредвиденная ошибка: " + t.getMessage();
+                }
+
+                // Показываем пользователю сообщение об ошибке
+                Toast.makeText(InventoryListActivity.this, errorMsg, Toast.LENGTH_LONG).show();
             }
         });
     }
