@@ -30,6 +30,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 		
+	<Button
+		android:id="@+id/btnExportDb"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="📊 Экспорт БД"
+		android:layout_margin="8dp"
+		android:backgroundTint="@color/design_default_color_primary"
+		android:textColor="@android:color/white" />
+
+		
     <!-- ВАШ RecyclerView, мы просто изменили его верхнюю привязку -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/itemsRecyclerView"
@@ -55,5 +65,7 @@
         app:layout_constraintBottom_toTopOf="@id/sendButton"
         app:layout_constraintEnd_toEndOf="parent"
         android:contentDescription="Сканировать" />
+		
+	
 
 </androidx.constraintlayout.widget.ConstraintLayout>

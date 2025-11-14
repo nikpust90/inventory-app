@@ -9,9 +9,12 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.inventory_app.ApiClient;
 import com.example.inventory_app.ApiService;
-import com.example.inventory_app.LoginRequest;
-import com.example.inventory_app.LoginResponse;
+import com.example.inventory_app.MainActivity;
+import com.example.inventory_app.models.LoginRequest;
+import com.example.inventory_app.models.LoginResponse;
 import com.example.inventory_app.databinding.ActivityLoginBinding; // Убедитесь, что путь правильный
+
+import java.util.HashSet;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -57,7 +60,7 @@ public class LoginActivity extends AppCompatActivity {
                     saveUserData(loginData);
 
                     // Переходим на главный экран
-                    startActivity(new Intent(LoginActivity.this, InventoryListActivity.class));
+                    startActivity(new Intent(LoginActivity.this, MainActivity.class));
                     finish(); // Закрываем экран входа
                 } else {
                     String errorMessage = "Произошла неизвестная ошибка";
@@ -93,8 +96,17 @@ public class LoginActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString("USER_NAME", data.getUserName());
-        editor.putString("WAREHOUSE_ID", data.getWarehouseId());
-        editor.apply();
+        // Сохраняем флаг администратора
+        editor.putBoolean("IS_ADMIN", data.isAdmin());
+        // Сохраняем ВЕСЬ список складов.
+        if (data.getWarehouseIds() != null) {
+            editor.putStringSet("WAREHOUSE_ID_LIST", new HashSet<>(data.getWarehouseIds()));
+        } else {
+            editor.putStringSet("WAREHOUSE_ID_LIST", new HashSet<>());
+        }
+
+        // --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Используем commit() для синхронного сохранения ---
+        editor.commit(); // <-- Замените editor.apply() на editor.commit()
     }
 
 

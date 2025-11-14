@@ -1,13 +1,15 @@
 package com.example.inventory_app.activity;
 
 // ИЗМЕНЕНО: Добавлены импорты для View и встроенного сканера
+import android.Manifest;
+import android.annotation.TargetApi;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
+import android.net.Uri;
+import android.os.*;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -15,29 +17,36 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 import com.example.inventory_app.*;
 import com.example.inventory_app.adapters.InventoryItemAdapter;
+import com.example.inventory_app.data.*;
 import com.example.inventory_app.databinding.ActivityDocumentBinding;
+import com.example.inventory_app.models.InventoryDocument;
+import com.example.inventory_app.models.InventoryItem;
+import com.example.inventory_app.models.Seriya;
 import com.google.zxing.BarcodeFormat;
 import com.journeyapps.barcodescanner.BarcodeCallback;
-import com.journeyapps.barcodescanner.BarcodeResult;
 import com.journeyapps.barcodescanner.DecoratedBarcodeView;
 // УДАЛЕНО: Импорты для старого сканера больше не нужны
 // import com.google.zxing.integration.android.IntentIntegrator;
 // import com.google.zxing.integration.android.IntentResult;
 import com.journeyapps.barcodescanner.DefaultDecoderFactory;
 import com.journeyapps.barcodescanner.camera.CameraSettings;
-import org.jetbrains.annotations.Nullable;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import androidx.appcompat.app.AlertDialog;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import com.example.inventory_app.data.LocalQueueManager;
 
 public class InventoryActivity extends AppCompatActivity {
 
@@ -45,26 +54,38 @@ public class InventoryActivity extends AppCompatActivity {
     private ApiService apiService;
     private InventoryItemAdapter adapter;
     private InventoryDocument currentDocument;
-
-    // НОВЫЕ ПОЛЯ: для управления встроенным сканером
     private DecoratedBarcodeView barcodeView;
     private String lastScannedBarcode = "";
-
+    private long lastScanTime = 0;
+    private static final long SCAN_DELAY_MS = 1500;
     private static final int CAMERA_PERMISSION_REQUEST = 1001;
     private boolean hasCameraPermission = false;
-
     private RecyclerView recyclerView;
+    private LocalQueueManager queueManager;
+    private static final int STORAGE_PERMISSION_CODE = 1002;
 
 
-    // НОВЫЙ ОБЪЕКТ: Callback, который будет получать результат сканирования непрерывно
+    // 🔹 ИЗМЕНЕНО: новый callback с ограничением частоты сканирования
     private final BarcodeCallback callback = result -> {
-        // Проверяем, что результат есть и он не такой же, как предыдущий
-        if (result.getText() == null || result.getText().equals(lastScannedBarcode)) {
+        if (result.getText() == null) return;
+
+        long now = System.currentTimeMillis();
+
+        // 🔸 ДОБАВЛЕНО: защита от слишком частого сканирования
+        if (now - lastScanTime < SCAN_DELAY_MS) {
+            return; // Пропускаем если с момента прошлого скана прошло < 2 секунд
+        }
+
+        // 🔸 ДОБАВЛЕНО: защита от дублирования того же штрихкода
+        if (result.getText().equals(lastScannedBarcode)) {
             return;
         }
-        lastScannedBarcode = result.getText();
 
-        // Вызываем обработку в основном потоке для безопасности работы с UI
+        // 🔸 ДОБАВЛЕНО: обновляем данные последнего сканирования
+        lastScannedBarcode = result.getText();
+        lastScanTime = now;
+
+        // 🔸 Обработка скана в UI-потоке
         runOnUiThread(() -> processScan(lastScannedBarcode));
     };
 
@@ -81,6 +102,19 @@ public class InventoryActivity extends AppCompatActivity {
         barcodeView = binding.barcodeScanner;
         apiService = ApiClient.getRetrofitInstance().create(ApiService.class);
 
+        queueManager = new LocalQueueManager(this, apiService);
+
+        // Раз в onCreate
+        PeriodicWorkRequest workRequest = new PeriodicWorkRequest.Builder(
+                PendingUploadWorker.class,
+                15, TimeUnit.MINUTES
+        ).build();
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "PendingUploadWork",
+                androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+                workRequest
+        );
+
         String documentId = getIntent().getStringExtra("DOCUMENT_ID");
 
         setupRecyclerView();
@@ -94,13 +128,10 @@ public class InventoryActivity extends AppCompatActivity {
         // ИЗМЕНЕНО: Старый вызов сканера заменен на вызов метода-переключателя
         binding.fabScan.setOnClickListener(v -> toggleScanner());
 
-        binding.sendButton.setOnClickListener(v -> {
-            if (currentDocument != null) {
-                sendDocumentToServer();
-            } else {
-                Toast.makeText(this, "Документ не загружен", Toast.LENGTH_SHORT).show();
-            }
-        });
+        binding.sendButton.setOnClickListener(v -> sendDocument());
+
+        binding.btnExportDb.setOnClickListener(v -> exportDatabase());
+
     }
 
     private void checkCameraPermission() {
@@ -199,6 +230,8 @@ public class InventoryActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        queueManager.trySendAll();
+
         // Возобновляем работу камеры только если сканер был видимым
         if (barcodeView.getVisibility() == View.VISIBLE) {
             barcodeView.resume();
@@ -276,10 +309,12 @@ public class InventoryActivity extends AppCompatActivity {
         }
 
         // Задержка перед следующим сканированием
-        new android.os.Handler().postDelayed(() -> lastScannedBarcode = "", 800);
+        //new android.os.Handler().postDelayed(() -> lastScannedBarcode = "", 800);
     }
 
+
     /**
+     * 🔥 ИЗМЕНЕНО: Теперь показывает диалоговое окно для подтверждения найденной позиции.
      * Обрабатывает найденную позицию: обновляет данные, адаптер и подает сигнал пользователю.
      * @param itemIndex Индекс найденной позиции в списке currentDocument.getItems()
      */
@@ -293,16 +328,47 @@ public class InventoryActivity extends AppCompatActivity {
             return;
         }
 
-        item.setKolichestvoFakt(1); // Устанавливаем факт = 1
-        item.setFound(true);      // Помечаем как найденную
-        adapter.notifyItemChanged(itemIndex);
+        // 🔥 НОВЫЙ КОД: Создаем и показываем диалоговое окно
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("✅ Найдена позиция");
 
-        playSuccessSound();
-        vibrateSuccess();
-        Toast.makeText(this, "Найдено: " + item.getNomenklatura().getName(), Toast.LENGTH_SHORT).show();
+        // Формируем сообщение с деталями
+        String message = "Номенклатура: " + item.getNomenklatura().getName();
+        if (item.getSeriya() != null) {
+            if (item.getSeriya().getName() != null && !item.getSeriya().getName().isEmpty()) {
+                message += "\nСерия: " + item.getSeriya().getName();
+            }
+            if (item.getSeriya().getImei() != null && !item.getSeriya().getImei().isEmpty()) {
+                message += "\nIMEI: " + item.getSeriya().getImei();
+            }
+        }
+        builder.setMessage(message);
 
-        // Прокрутка к найденной позиции
-        recyclerView.scrollToPosition(itemIndex);
+        // Кнопка "ОК"
+        builder.setPositiveButton("ОК", (dialog, which) -> {
+            // Вся логика обработки выполняется только после нажатия "ОК"
+            item.setKolichestvoFakt(1); // Устанавливаем факт = 1
+            item.setFound(true);      // Помечаем как найденную
+            adapter.notifyItemChanged(itemIndex);
+
+            playSuccessSound();
+            vibrateSuccess();
+            Toast.makeText(this, "Подтверждено: " + item.getNomenklatura().getName(), Toast.LENGTH_SHORT).show();
+
+            // Прокрутка к найденной позиции
+            recyclerView.scrollToPosition(itemIndex);
+
+            dialog.dismiss();
+        });
+
+        // Кнопка "Отмена"
+        builder.setNegativeButton("Отмена", (dialog, which) -> {
+            dialog.dismiss();
+        });
+
+        // Показываем диалог
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     /**
@@ -435,24 +501,282 @@ public class InventoryActivity extends AppCompatActivity {
         }
     }
 
-    private void sendDocumentToServer() {
-        if (currentDocument == null) return;
 
-        apiService.updateInventoryDocument(currentDocument).enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    Toast.makeText(InventoryActivity.this, "Документ успешно отправлен!", Toast.LENGTH_LONG).show();
-                    finish();
-                } else {
-                    Toast.makeText(InventoryActivity.this, "Ошибка отправки документа", Toast.LENGTH_SHORT).show();
+    private void sendDocument() {
+        if (currentDocument == null) {
+            Toast.makeText(this, "Документ не заполнен", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        queueManager.sendOrQueue(currentDocument);
+    }
+
+    // ДАЛЕЕ КЛАССЫ ПРОСТО ДЛЯ ВЫГРУЗКИ БД
+    private void exportDatabase() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Для Android 10+ не нужны разрешения для Downloads
+            performExport();
+        } else {
+            // Для старых версий запрашиваем разрешения
+            if (checkStoragePermission()) {
+                performExport();
+            } else {
+                requestStoragePermission();
+            }
+        }
+    }
+
+    private boolean checkStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED;
+        }
+        return true;
+    }
+
+    private void requestStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(
+                    new String[]{
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            Manifest.permission.READ_EXTERNAL_STORAGE
+                    },
+                    STORAGE_PERMISSION_CODE
+            );
+        }
+    }
+
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+//                                           @NonNull int[] grantResults) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//        if (requestCode == STORAGE_PERMISSION_CODE) {
+//            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                performExport();
+//            } else {
+//                Toast.makeText(this, "Нужны разрешения для экспорта БД", Toast.LENGTH_LONG).show();
+//            }
+//        }
+//    }
+
+    private void performExport() {
+        new Thread(() -> {
+            try {
+                // 1. Получаем путь к РЕАЛЬНОЙ базе данных Room
+                File dbFile = getDatabasePath("local_queue_db");
+
+                // 2. Room создает несколько файлов - нужно копировать основной
+                Log.d("Export", "Main DB path: " + dbFile.getAbsolutePath());
+                Log.d("Export", "Main DB exists: " + dbFile.exists());
+
+                if (!dbFile.exists()) {
+                    runOnUiThread(() ->
+                            Toast.makeText(this, "Основная БД не найдена: " + dbFile.getAbsolutePath(), Toast.LENGTH_LONG).show());
+                    return;
                 }
+
+                // 3. Проверяем размер БД
+                long dbSize = dbFile.length();
+                Log.d("Export", "DB size: " + dbSize + " bytes");
+
+                if (dbSize == 0) {
+                    runOnUiThread(() ->
+                            Toast.makeText(this, "БД пуста или не создана", Toast.LENGTH_LONG).show());
+                    return;
+                }
+
+                // 4. ВЫВОДИМ ПЕРВУЮ СТРОКУ ИЗ БД ДЛЯ ПРОВЕРКИ
+                showFirstRecordForDebug();
+
+                // 5. Создаем папку для экспорта
+                File exportDir;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    // Для Android 10+ используем MediaStore
+                    exportUsingMediaStore(dbFile);
+                    return;
+                } else {
+                    // Для старых версий - прямо в Downloads
+                    exportDir = new File(
+                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                            "InventoryAppDB"
+                    );
+
+                    if (!exportDir.exists() && !exportDir.mkdirs()) {
+                        runOnUiThread(() ->
+                                Toast.makeText(this, "Не удалось создать папку: " + exportDir.getAbsolutePath(), Toast.LENGTH_LONG).show());
+                        return;
+                    }
+                }
+
+                // 6. Копируем файл БД
+                File destFile = new File(exportDir, "local_queue_db.db");
+
+                try (InputStream in = new FileInputStream(dbFile);
+                     OutputStream out = new FileOutputStream(destFile)) {
+
+                    byte[] buffer = new byte[8192]; // Увеличиваем буфер для скорости
+                    int length;
+                    long totalCopied = 0;
+
+                    while ((length = in.read(buffer)) > 0) {
+                        out.write(buffer, 0, length);
+                        totalCopied += length;
+                    }
+
+                    Log.d("Export", "Copied " + totalCopied + " bytes to " + destFile.getAbsolutePath());
+                }
+
+                // 7. Проверяем что скопировалось
+                if (destFile.exists() && destFile.length() > 0) {
+                    final String successMessage = "БД успешно экспортирована!\n" +
+                            "Размер: " + destFile.length() + " байт\n" +
+                            "Путь: Download/InventoryAppDB/local_queue_db.db";
+
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, successMessage, Toast.LENGTH_LONG).show();
+
+                        // Показываем подробности
+                        new AlertDialog.Builder(this)
+                                .setTitle("✅ Экспорт завершен")
+                                .setMessage(successMessage)
+                                .setPositiveButton("OK", null)
+                                .show();
+                    });
+
+                } else {
+                    runOnUiThread(() ->
+                            Toast.makeText(this, "Ошибка: файл не скопировался", Toast.LENGTH_LONG).show());
+                }
+
+            } catch (Exception e) {
+                Log.e("Export", "Export error", e);
+                runOnUiThread(() ->
+                        Toast.makeText(this, "Ошибка экспорта: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            }
+        }).start();
+    }
+
+    // МЕТОД ДЛЯ ВЫВОДА ПЕРВОЙ СТРОКИ БД
+    private void showFirstRecordForDebug() {
+        try {
+            AppDatabase db = AppDatabaseSingleton.getInstance(this);
+            List<PendingDocument> docs = db.pendingDocumentDao().getAll();
+
+            if (docs == null || docs.isEmpty()) {
+                Log.d("Export", "БД ПУСТА - нет записей для экспорта");
+                runOnUiThread(() ->
+                        Toast.makeText(this, "БД пуста - нет записей", Toast.LENGTH_LONG).show());
+                return;
             }
 
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                Toast.makeText(InventoryActivity.this, "Ошибка сети при отправке: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            // Берем первую запись
+            PendingDocument firstDoc = docs.get(0);
+
+            String debugInfo = "=== ДЕБАГ ИНФО БД ===\n" +
+                    "Всего записей: " + docs.size() + "\n" +
+                    "Первая запись:\n" +
+                    "ID: " + firstDoc.id + "\n" +
+                    "Timestamp: " + firstDoc.timestamp + "\n" +
+                    "JSON длина: " + (firstDoc.documentJson != null ? firstDoc.documentJson.length() : 0) + " символов\n" +
+                    "JSON начало: " + (firstDoc.documentJson != null ?
+                    firstDoc.documentJson.substring(0, Math.min(80, firstDoc.documentJson.length())) : "null");
+
+            Log.d("Export", debugInfo);
+
+            // Показываем пользователю только основную информацию
+            final String userMessage = "Найдено записей: " + docs.size() +
+                    "\nПервая запись ID: " + firstDoc.id;
+
+            runOnUiThread(() -> {
+                Toast.makeText(this, userMessage, Toast.LENGTH_LONG).show();
+            });
+
+        } catch (Exception e) {
+            Log.e("Export", "Ошибка при чтении БД для дебага", e);
+        }
+    }
+
+    // РЕАЛИЗАЦИЯ МЕТОДА exportUsingMediaStore
+    @TargetApi(Build.VERSION_CODES.Q)
+    private void exportUsingMediaStore(File dbFile) {
+        try {
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(MediaStore.Downloads.DISPLAY_NAME, "local_queue_db.db");
+            contentValues.put(MediaStore.Downloads.MIME_TYPE, "application/octet-stream");
+            contentValues.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/InventoryAppDB");
+
+            Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues);
+
+            if (uri != null) {
+                try (OutputStream out = getContentResolver().openOutputStream(uri);
+                     InputStream in = new FileInputStream(dbFile)) {
+
+                    byte[] buffer = new byte[8192];
+                    int length;
+                    long totalCopied = 0;
+
+                    while ((length = in.read(buffer)) > 0) {
+                        out.write(buffer, 0, length);
+                        totalCopied += length;
+                    }
+
+                    Log.d("Export", "Copied " + totalCopied + " bytes via MediaStore");
+                }
+
+                final String successMessage = "БД экспортирована через MediaStore!\n" +
+                        "Путь: Download/InventoryAppDB/local_queue_db.db\n" +
+                        "Записей в БД: " + getRecordCount();
+
+                runOnUiThread(() -> {
+                    Toast.makeText(this, successMessage, Toast.LENGTH_LONG).show();
+
+                    new AlertDialog.Builder(this)
+                            .setTitle("✅ Экспорт завершен")
+                            .setMessage(successMessage)
+                            .setPositiveButton("OK", null)
+                            .show();
+                });
+            } else {
+                runOnUiThread(() ->
+                        Toast.makeText(this, "Ошибка: не удалось создать файл через MediaStore", Toast.LENGTH_LONG).show());
             }
-        });
+
+        } catch (Exception e) {
+            Log.e("Export", "MediaStore export error", e);
+            runOnUiThread(() ->
+                    Toast.makeText(this, "Ошибка MediaStore: " + e.getMessage(), Toast.LENGTH_LONG).show());
+        }
+    }
+
+    // Вспомогательный метод для получения количества записей
+    private int getRecordCount() {
+        try {
+            AppDatabase db = AppDatabaseSingleton.getInstance(this);
+            List<PendingDocument> docs = db.pendingDocumentDao().getAll();
+            return docs != null ? docs.size() : 0;
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
+    private void showExportSuccessDialog(String filePath) {
+        new AlertDialog.Builder(this)
+                .setTitle("✅ База данных экспортирована")
+                .setMessage("Файл: " + filePath + "\n\nТеперь откройте его в SQLite Viewer")
+                .setPositiveButton("OK", null)
+                .setNeutralButton("Открыть папку", (dialog, which) -> openDownloadsFolder())
+                .show();
+    }
+
+    private void openDownloadsFolder() {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            Uri uri = Uri.parse(Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS) + "/InventoryAppDB");
+            intent.setDataAndType(uri, "resource/folder");
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, "Не удалось открыть папку", Toast.LENGTH_SHORT).show();
+        }
     }
 }

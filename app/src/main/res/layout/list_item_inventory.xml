@@ -24,6 +24,15 @@
             android:textStyle="bold"
             android:textColor="@android:color/black"
             tools:text="Пример товара" />
+			
+		<TextView
+            android:id="@+id/textViewWarehouse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            tools:text="Склад: Основной склад" />
 
 		<!-- Серия (тёмно-серая, 14sp) -->
 		<TextView

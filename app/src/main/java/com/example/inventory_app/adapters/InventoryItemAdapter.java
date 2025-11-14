@@ -2,10 +2,11 @@ package com.example.inventory_app.adapters;
 
 
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.inventory_app.InventoryItem;
+import com.example.inventory_app.models.InventoryItem;
 import com.example.inventory_app.databinding.ListItemInventoryBinding; // Убедитесь, что этот layout-файл существует
 import java.util.List;
 
@@ -66,6 +67,15 @@ public class InventoryItemAdapter extends RecyclerView.Adapter<InventoryItemAdap
         public void bind(InventoryItem item) {
             // Устанавливаем текст в TextView
             binding.textViewNomenclature.setText(item.getNomenklatura().getName());
+            // ✅ ДОБАВЛЕНИЕ ЛОГИКИ СКЛАДА
+            if (item.getWarehouseName() != null && !item.getWarehouseName().isEmpty()) {
+                binding.textViewWarehouse.setText("Склад: " + item.getWarehouseName());
+                binding.textViewWarehouse.setVisibility(View.VISIBLE);
+            } else {
+                binding.textViewWarehouse.setVisibility(View.GONE);
+            }
+            // ---------------------------
+            //binding.textViewWarehouse = itemView.findViewById(R.id.textViewWarehouse);
             binding.textViewSerial.setText("Серия: " + item.getSeriya().getName());
             binding.textViewImei.setText("imei: " + item.getSeriya().getImei());
             binding.textViewQuantity.setText("План: " + item.getKolichestvo());

@@ -4,13 +4,17 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.inventory_app.InventoryDocument;
+import com.example.inventory_app.models.InventoryDocument;
 import com.example.inventory_app.databinding.ListItemDocumentBinding; // Убедитесь, что этот binding генерируется из list_item_document.xml
 import java.util.List;
 
 public class InventoryDocumentsAdapter extends RecyclerView.Adapter<InventoryDocumentsAdapter.ViewHolder> {
     private List<InventoryDocument> documents;
     private final OnDocumentClickListener clickListener;
+
+    public List<InventoryDocument> getDocuments() {
+        return documents;
+    }
 
     public interface OnDocumentClickListener {
         void onClick(String documentId);

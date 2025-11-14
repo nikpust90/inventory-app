@@ -6,6 +6,7 @@ import android.view.View;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.inventory_app.activity.InventoryListActivity;
 import com.example.inventory_app.activity.LoginActivity;
+import com.example.inventory_app.activity.StockReportActivity;
 import com.example.inventory_app.databinding.ActivityMainBinding;
 
 /**
@@ -18,32 +19,27 @@ public class MainActivity extends AppCompatActivity {
 //    @Override
 //    protected void onCreate(Bundle savedInstanceState) {
 //        super.onCreate(savedInstanceState);
-//        binding = ActivityMainBinding.inflate(getLayoutInflater());
-//        setContentView(binding.getRoot());
 //
+//        // Сразу же перенаправляем на экран входа
+//        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+//        startActivity(intent);
 //
-//        // Обработчик кнопки для просмотра списка документов инвентаризации
-//        // Предполагаем, что в layout activity_main.xml есть кнопка с id="viewInventoryListButton"
-//        // Если кнопки нет, добавьте в XML: <Button android:id="@+id/viewInventoryListButton" android:text="Просмотреть список документов" ... />
-//        binding.viewInventoryListButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                // Переход в активность со списком документов инвентаризации
-//                startActivity(new Intent(MainActivity.this, InventoryListActivity.class));
-//            }
-//        });
-//
-//
+//        // Закрываем текущую активность, чтобы она не оставалась в стеке
+//        finish();
 //    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        // Сразу же перенаправляем на экран входа
-        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-        startActivity(intent);
+        // Переход на экран остатков
+        binding.viewInventoryListButton.setOnClickListener(v ->
+                startActivity(new Intent(MainActivity.this, InventoryListActivity.class))
+        );
 
-        // Закрываем текущую активность, чтобы она не оставалась в стеке
-        finish();
+        binding.viewStockButton.setOnClickListener(v ->
+                startActivity(new Intent(MainActivity.this, StockReportActivity.class))
+        );
     }
 }

@@ -1,4 +1,4 @@
-package com.example.inventory_app;
+package com.example.inventory_app.models;
 
 import com.google.gson.annotations.SerializedName;
 

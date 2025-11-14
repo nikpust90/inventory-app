@@ -14,4 +14,15 @@
     <color name="zxing_result_view">#4000FF00</color>
     <color name="zxing_viewfinder_laser">#FFFF5252</color>
     <color name="zxing_viewfinder_mask">#A0000000</color>
+
+    <!-- Новые цвета для статусов наличия -->
+    <color name="no_stock">#FFEBEE</color>
+    <color name="partial_stock">#FFF3E0</color>
+    <color name="full_stock">#E8F5E8</color>
+
+    <!-- Новые цвета для отчета остатков -->
+    <color name="warehouse_expanded">#E8F5E8</color>
+    <color name="warehouse_collapsed">#FFF3E0</color>
+    <color name="series_background">#F5F5F5</color>
+    <color name="primary_color">#2196F3</color>
 </resources>

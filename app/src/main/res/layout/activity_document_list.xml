@@ -26,6 +26,27 @@
         android:layout_weight="1"
         android:padding="8dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+		
+	<Button
+		android:id="@+id/btnAttachPhotos"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Прикрепить фото"
+		android:layout_margin="8dp" />
+		
+	<!-- Кнопка сканирования по всем документам -->
+    <Button
+        android:id="@+id/btnScanAllDocuments"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="Сканировать по всем документам в текущем списке"
+        android:textAllCaps="false"
+        android:background="@color/design_default_color_primary"
+        android:textColor="@android:color/white"
+        android:padding="12dp" />
+		
+
 
 </LinearLayout>
 

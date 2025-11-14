@@ -1,5 +1,8 @@
 package com.example.inventory_app;
 
+import com.example.inventory_app.models.InventoryItem;
+import com.example.inventory_app.models.Nomenklatura;
+import com.example.inventory_app.models.Seriya;
 import com.google.gson.*;
 import okhttp3.*;
 import retrofit2.Retrofit;
@@ -8,15 +11,13 @@ import java.io.IOException;
 
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 public class ApiClient {
     //
     private static final String BASE_URL = "";
-    private static final String USERNAME = ""; // Замените на реальный логин
-    private static final String PASSWORD = ""; // Замените на реальный пароль
-   // private static final String BEARER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJKV1Qgd2l0aCB1c2VyIGRldGFpbHMiLCJ1c2VybmFtZSI6InVzZXJfdGVzdCIsInJvbGUiOiJST0xFX0FETUlOIiwiaWF0IjoxNzM5NTQyOTUwLCJpc3MiOiJNYXhpbWEgU2Nob29sIiwiZXhwIjoxNzc1ODMwOTUwfQ.nEqtAFmH6ol8kWp-71Bqt8fUZF3Q8Y2lF3j8IO8X-VI"; // Ваш токен
+    private static final String USERNAME = "";
+    private static final String PASSWORD = "";
 
 
     public static ApiService getApiService() {
@@ -34,7 +35,7 @@ public class ApiClient {
 
                 // Собираем nomenklatura
                 if (obj.has("nomenklaturaId") && obj.has("nomenklatura")) {
-                    com.example.inventory_app.Nomenklatura n = new com.example.inventory_app.Nomenklatura();
+                    Nomenklatura n = new Nomenklatura();
                     n.setId(obj.get("nomenklaturaId").getAsString());
                     n.setName(obj.get("nomenklatura").getAsString());
                     item.setNomenklatura(n);
@@ -42,7 +43,7 @@ public class ApiClient {
 
                 // Собираем seriya
                 if (obj.has("seriyaId") && obj.has("seriya")) {
-                    com.example.inventory_app.Seriya s = new com.example.inventory_app.Seriya();
+                    Seriya s = new Seriya();
                     s.setId(obj.get("seriyaId").getAsString());
                     s.setName(obj.get("seriya").getAsString());
                     if (obj.has("imei")) {

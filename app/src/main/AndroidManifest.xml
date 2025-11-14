@@ -2,7 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools" package="com.example.inventory_app">
 
+
+
     <!-- Разрешение на использование камеры -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
@@ -11,6 +14,7 @@
     <!-- Разрешение на чтение/запись во внешнее хранилище (если необходимо) -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <uses-permission android:name="android.permission.VIBRATE" />
 
@@ -46,8 +50,23 @@
                 android:name=".activity.InventoryListActivity"
                 android:exported="false"/>
 
+        <!-- НОВАЯ АКТИВНОСТЬ ДЛЯ СКАНИРОВАНИЯ ПО ВСЕМ ДОКУМЕНТАМ -->
+        <activity
+                android:name=".activity.MultiDocumentScanActivity"
+                android:exported="false"
+                android:screenOrientation="portrait" />
+
         <activity android:name=".activity.InventoryActivity"
                   android:exported="true" />
+
+        <activity
+                android:name=".activity.StockReportActivity"
+                android:exported="false"/>
+
+        <activity
+                android:name=".activity.YandexOAuthActivity"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                android:exported="false" />
 
         <!-- Добавляем BroadcastReceiver для сканера -->
         <receiver android:name=".BarcodeReceiver"
