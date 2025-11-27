@@ -128,6 +128,7 @@ public class StockReportActivity extends AppCompatActivity {
                             item.totalQuantity,
                             item.reserveQuantity,
                             item.freeQuantity,
+                            item.inTransitQuantity,
                             item.series
                     );
 

@@ -32,6 +32,9 @@ public class StockItem {
     @SerializedName("freeQuantity")
     public int freeQuantity;
 
+    @SerializedName("inTransitQuantity")
+    public int inTransitQuantity;
+
     // Для серии
     @SerializedName("seriyaId")
     public String seriyaId;
@@ -60,7 +63,7 @@ public class StockItem {
     }
 
     // Конструктор номенклатуры
-    public static StockItem nomenclature(String id, String name, int quantity, int reserveQuantity, int freeQuantity, List<Seriya> series) {
+    public static StockItem nomenclature(String id, String name, int quantity, int reserveQuantity, int freeQuantity, int inTransitQuantity, List<Seriya> series) {
         StockItem item = new StockItem();
         item.type = TYPE_NOMENCLATURE;
         item.nomenclatureId = id;
@@ -68,6 +71,7 @@ public class StockItem {
         item.totalQuantity = quantity;
         item.reserveQuantity = reserveQuantity;
         item.freeQuantity = freeQuantity;
+        item.inTransitQuantity = inTransitQuantity;
         item.series = series;
         item.children = new java.util.ArrayList<>();
         return item;
@@ -115,7 +119,13 @@ public String getSeriesText() {
 }
 
     public String getQuantityText() {
-        return String.format("Всего: %d | Резерв: %d | Свободно: %d",
-                totalQuantity, reserveQuantity, freeQuantity);
+        // Используем перенос строки (\n), чтобы "В пути" было заметно
+        if (inTransitQuantity > 0) {
+            return String.format("Всего: %d | Рез: %d | Своб: %d\nВ пути: %d",
+                    totalQuantity, reserveQuantity, freeQuantity, inTransitQuantity);
+        } else {
+            return String.format("Всего: %d | Рез: %d | Своб: %d",
+                    totalQuantity, reserveQuantity, freeQuantity);
+        }
     }
 }
