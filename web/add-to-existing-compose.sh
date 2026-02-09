@@ -59,7 +59,7 @@ docker compose up -d --build car-scheme-web
 
 if [ $? -eq 0 ]; then
     echo "✅ Веб-приложение успешно запущено!"
-    echo "🌐 Доступно по адресу: http://45.155.207.231:3001"
+    echo "🌐 Доступно по адресу: http://<server-ip>:3001"
     echo ""
     echo "📋 Существующие контейнеры (postgres, backend, bot, portainer) не были затронуты!"
 else

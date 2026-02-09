@@ -61,7 +61,7 @@ docker ps | grep car-scheme-web
 
 if [ $? -eq 0 ]; then
     echo "✅ Контейнер успешно запущен!"
-    echo "🌐 Приложение доступно по адресу: http://45.155.207.231:3001"
+    echo "🌐 Приложение доступно по адресу: http://<server-ip>:3001"
     echo "📋 Для просмотра логов используйте: docker logs car-scheme-web"
 else
     echo "❌ Ошибка: Контейнер не запущен. Проверьте логи: docker logs car-scheme-web"

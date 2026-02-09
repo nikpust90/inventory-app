@@ -12,7 +12,7 @@ services:
     container_name: logs_db
     environment:
       POSTGRES_USER: user
-      POSTGRES_PASSWORD: Gfgrf230390
+      POSTGRES_PASSWORD: <db-password>
       POSTGRES_DB: logs
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -25,7 +25,7 @@ services:
     build: ./backend
     container_name: api_backend
     environment:
-      DATABASE_URL: postgres://user:Gfgrf230390@postgres:5432/logs
+      DATABASE_URL: postgres://user:<db-password>@postgres:5432/logs
     ports:
       - "8000:8000"
     depends_on:
@@ -36,8 +36,8 @@ services:
     build: ./bot
     container_name: telegram_bot
     environment:
-      BOT_TOKEN: "8525391362:AAGecjaIaZN4ySk5cZ0sYq-_O4hEhtzTU9c"
-      DATABASE_URL: postgres://user:Gfgrf230390@postgres:5432/logs
+      BOT_TOKEN: "<bot-token>"
+      DATABASE_URL: postgres://user:<db-password>@postgres:5432/logs
     depends_on:
       - postgres
     restart: always

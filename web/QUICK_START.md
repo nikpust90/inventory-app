@@ -5,15 +5,15 @@
 ### Windows (Putty):
 1. Скачайте Putty: https://www.chiark.greenend.org.uk/
 2. Подключитесь:
-   - Host: `45.155.207.231`
+   - Host: `<server-ip>`
    - Port: `22`
    - User: `root`
-   - Password: `3acf0371f6dd58!`
+   - Password: `<ssh-password>`
 
 ### Linux/Mac:
 ```bash
-ssh root@45.155.207.231
-# Пароль: 3acf0371f6dd58!
+ssh root@<server-ip>
+# Пароль: <ssh-password>
 ```
 
 ## Шаг 2: Загрузка файлов на сервер
@@ -26,7 +26,7 @@ ssh root@45.155.207.231
 ### Вариант B: SCP (командная строка)
 ```bash
 # Из локальной машины (Linux/Mac)
-scp -r web root@45.155.207.231:/opt/integration-platform/
+scp -r web root@<server-ip>:/opt/integration-platform/
 ```
 
 ### Вариант C: Вручную через nano/vim
@@ -64,7 +64,7 @@ docker logs car-scheme-web
 ```
 
 3. Откройте в браузере:
-   - **http://45.155.207.231:3001**
+   - **http://<server-ip>:3001**
 
 ## Обновление
 
@@ -78,4 +78,4 @@ docker compose up -d --build
 
 - **Порт занят?** Измените порт в `docker-compose.yml` (например, на 3002)
 - **Контейнер не запускается?** Проверьте логи: `docker logs car-scheme-web`
-- **Нужна помощь?** Используйте Portainer: http://45.155.207.231:9000
+- **Нужна помощь?** Используйте Portainer: http://<server-ip>:9000

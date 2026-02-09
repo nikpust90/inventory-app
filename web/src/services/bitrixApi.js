@@ -4,7 +4,7 @@
  */
 import axios from 'axios';
 
-const BASE_URL = 'https://portal.stavtrack.ru/rest/44/p8n7lebvcaj75mk0/';
+const BASE_URL = process.env.REACT_APP_BITRIX_BASE_URL || 'https://<bitrix-host>/rest/<user>/<token>/';
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

@@ -15,7 +15,7 @@ import java.util.Locale;
 
 public class BitrixManager {
 
-    private static final String BASE_URL = "https://portal.stavtrack.ru/rest/44/p8n7lebvcaj75mk0/";
+    private static final String BASE_URL = "https://<bitrix-host>/rest/<user>/<token>/";
     private final BitrixApi api;
     private final Context context;
 

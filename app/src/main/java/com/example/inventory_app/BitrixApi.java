@@ -6,7 +6,7 @@ import retrofit2.http.Body;
 import retrofit2.http.POST;
 
 public interface BitrixApi {
-    // URL из вашего 1С кода: portal.stavtrack.ru/rest/44/p8n7lebvcaj75mk0/
+    // URL из вашего 1С кода: <bitrix-host>/rest/<user>/<token>/
 
     @POST("crm.item.list")
     Call<BitrixModels.ItemListResponse> getItemId(@Body BitrixModels.FilterRequest body);
