@@ -1,0 +1,233 @@
+/**
+ * Стили для диалога отправки в Bitrix
+ */
+.bitrix-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.bitrix-dialog {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.bitrix-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.bitrix-dialog-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.bitrix-dialog-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.bitrix-dialog-close:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.bitrix-dialog-form {
+  padding: 24px;
+}
+
+.bitrix-dialog-field {
+  margin-bottom: 20px;
+}
+
+.bitrix-dialog-field label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #555;
+  font-size: 14px;
+}
+
+.bitrix-dialog-field input[type="text"] {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.bitrix-dialog-field input[type="text"]:focus {
+  border-color: #4CAF50;
+}
+
+.bitrix-dialog-field input[type="text"]:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.bitrix-dialog-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.bitrix-dialog-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  cursor: pointer;
+  accent-color: #4CAF50;
+}
+
+.bitrix-dialog-checkbox input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+}
+
+.bitrix-dialog-checkbox span {
+  font-size: 14px;
+  color: #555;
+}
+
+.bitrix-dialog-error {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  border-left: 4px solid #c62828;
+}
+
+.bitrix-dialog-success {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  border-left: 4px solid #2e7d32;
+  text-align: center;
+  font-weight: 500;
+}
+
+.bitrix-dialog-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.bitrix-dialog-button {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 100px;
+}
+
+.bitrix-dialog-button.cancel {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.bitrix-dialog-button.cancel:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+.bitrix-dialog-button.submit {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.bitrix-dialog-button.submit:hover:not(:disabled) {
+  background-color: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.bitrix-dialog-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Адаптивность */
+@media (max-width: 600px) {
+  .bitrix-dialog {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .bitrix-dialog-header {
+    padding: 16px 20px;
+  }
+
+  .bitrix-dialog-form {
+    padding: 20px;
+  }
+
+  .bitrix-dialog-actions {
+    flex-direction: column;
+  }
+
+  .bitrix-dialog-button {
+    width: 100%;
+  }
+}

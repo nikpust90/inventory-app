@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  car-scheme-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: car-scheme-web
+    ports:
+      - "3001:80"
+    restart: unless-stopped
+    networks:
+      - default
+
+networks:
+  default:
+    external: false

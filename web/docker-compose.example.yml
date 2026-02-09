@@ -1,0 +1,69 @@
+# ПРИМЕР: Как должен выглядеть обновленный docker-compose.yml
+# Этот файл показывает, как добавить car-scheme-web в существующий compose
+# 
+# НЕ ИСПОЛЬЗУЙТЕ ЭТОТ ФАЙЛ НАПРЯМУЮ!
+# Скопируйте содержимое сервиса car-scheme-web в ваш существующий docker-compose.yml
+
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: logs_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: Gfgrf230390
+      POSTGRES_DB: logs
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db/data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: always
+
+  backend:
+    build: ./backend
+    container_name: api_backend
+    environment:
+      DATABASE_URL: postgres://user:Gfgrf230390@postgres:5432/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    restart: always
+
+  bot:
+    build: ./bot
+    container_name: telegram_bot
+    environment:
+      BOT_TOKEN: "8525391362:AAGecjaIaZN4ySk5cZ0sYq-_O4hEhtzTU9c"
+      DATABASE_URL: postgres://user:Gfgrf230390@postgres:5432/logs
+    depends_on:
+      - postgres
+    restart: always
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    ports:
+      - "9000:9000"
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    restart: always
+
+  # ⬇️ ДОБАВЬТЕ ЭТОТ СЕРВИС В КОНЕЦ (перед volumes:)
+  car-scheme-web:
+    build: ./web
+    container_name: car-scheme-web
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    networks:
+      - default
+    restart: unless-stopped
+
+volumes:
+  portainer_data:
