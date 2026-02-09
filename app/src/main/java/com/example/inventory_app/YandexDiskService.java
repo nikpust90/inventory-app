@@ -29,4 +29,19 @@ public interface YandexDiskService {
     @GET("/v1/disk/resources")
     Call<YandexDiskResponse> getResource(@Query("path") String path);
 
+    // ★ МЕТОД ДЛЯ ПУБЛИЧНЫХ РЕСУРСОВ
+    // public_key - это ваша ссылка (https://disk.yandex.ru/d/...)
+    @GET("/v1/disk/public/resources")
+    Call<YandexDiskResponse> getPublicResource(
+            @Query("public_key") String publicKey,
+            @Query("fields") String fields
+    );
+
+    // Добавить в интерфейс YandexDiskService
+    @GET
+    Call<ResponseBody> downloadFile(@Url String url);
+
+
+
+
 }

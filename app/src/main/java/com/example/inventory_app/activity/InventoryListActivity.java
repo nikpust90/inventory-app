@@ -41,6 +41,8 @@ public class InventoryListActivity extends AppCompatActivity {
     private InventoryDocumentsAdapter adapter; // Адаптер для списка документов
     //private String warehouseId; // Поле для хранения ID склада
 
+    // Добавляем главный тег для этого класса
+    private static final String LOG_TAG_LIST = "InventoryList";
     private List<String> warehouseIds; // Теперь это список
     private boolean isAdmin; // Будем хранить статус админа
 
@@ -99,6 +101,8 @@ public class InventoryListActivity extends AppCompatActivity {
      */
     private void openMultiDocumentScan() {
         if (adapter == null || adapter.getDocuments() == null || adapter.getDocuments().isEmpty()) {
+            RemoteLogger.warn(LOG_TAG_LIST, "MultiScanInit",
+                    "Попытка запуска мульти-сканирования при пустом списке документов");
             Toast.makeText(this, "Список документов пуст", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -108,6 +112,9 @@ public class InventoryListActivity extends AppCompatActivity {
         for (InventoryDocument doc : adapter.getDocuments()) {
             documentIds.add(doc.getId()); // Убедитесь, что у InventoryDocument есть метод getId()
         }
+
+        RemoteLogger.info(LOG_TAG_LIST, "MultiScanInit",
+                "Запуск MultiDocumentScanActivity. Собрано ID: " + documentIds.size());
 
         // 2. Создаем Intent для новой активности
         Intent intent = new Intent(this, MultiDocumentScanActivity.class); // Назовем ее так

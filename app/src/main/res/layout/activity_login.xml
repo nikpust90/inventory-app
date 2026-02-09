@@ -14,13 +14,21 @@
         android:text="Введите ПИН-код"
         android:textSize="20sp" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="5 символов (цифры и буквы)"
+        android:textSize="14sp"
+        android:textColor="#666666"
+        android:layout_marginTop="8dp" />
+
     <EditText
         android:id="@+id/pinEditText"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:inputType="numberPassword"
-        android:maxLength="4"
+        android:inputType="textVisiblePassword"
+        android:maxLength="5"
         android:gravity="center"
         android:textSize="24sp" />
 

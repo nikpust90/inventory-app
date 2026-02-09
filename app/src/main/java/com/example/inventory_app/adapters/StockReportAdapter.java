@@ -99,13 +99,19 @@ public class StockReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 item.expanded ? R.color.warehouse_expanded : R.color.warehouse_collapsed));
 
         holder.itemView.setOnClickListener(v -> {
-            if (item.expanded) {
-                collapseItem(position, item);
+            int pos = holder.getBindingAdapterPosition();
+            if (pos == RecyclerView.NO_POSITION) return;
+
+            StockItem clicked = items.get(pos);
+
+            if (clicked.expanded) {
+                collapseItem(pos, clicked);
             } else {
-                expandItem(position, item);
+                expandItem(pos, clicked);
             }
-            item.expanded = !item.expanded;
-            notifyItemChanged(position);
+
+            clicked.expanded = !clicked.expanded;
+            notifyItemChanged(pos);
         });
     }
 
@@ -132,13 +138,19 @@ public class StockReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         holder.itemView.setOnClickListener(v -> {
-            if (item.expanded) {
-                collapseItem(position, item);
+            int pos = holder.getBindingAdapterPosition();
+            if (pos == RecyclerView.NO_POSITION) return;
+
+            StockItem clicked = items.get(pos);
+
+            if (clicked.expanded) {
+                collapseItem(pos, clicked);
             } else {
-                expandItem(position, item);
+                expandItem(pos, clicked);
             }
-            item.expanded = !item.expanded;
-            notifyItemChanged(position);
+
+            clicked.expanded = !clicked.expanded;
+            notifyItemChanged(pos);
         });
     }
 
@@ -165,42 +177,44 @@ public class StockReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private void expandItem(int position, StockItem item) {
         if (item.children == null || item.children.isEmpty()) return;
 
-        // Сначала сворачиваем все другие элементы того же уровня
-        if (item.type == StockItem.TYPE_WAREHOUSE) {
-            collapseAllWarehousesExcept(position);
-        }
-
         int insertPos = position + 1;
         items.addAll(insertPos, item.children);
+
         notifyItemRangeInserted(insertPos, item.children.size());
     }
 
     private void collapseAllWarehousesExcept(int exceptPosition) {
-        List<StockItem> itemsToRemove = new ArrayList<>();
 
         for (int i = 0; i < items.size(); i++) {
-            StockItem currentItem = items.get(i);
+            StockItem warehouse = items.get(i);
 
-            // Если это склад (не тот, который мы разворачиваем) и он развернут
-            if (currentItem.type == StockItem.TYPE_WAREHOUSE &&
+            if (warehouse.type == StockItem.TYPE_WAREHOUSE &&
                     i != exceptPosition &&
-                    currentItem.expanded) {
+                    warehouse.expanded) {
 
-                // Собираем все дочерние элементы для удаления
-                collectVisibleDescendants(currentItem, itemsToRemove);
-                currentItem.expanded = false;
+                collapseItem(i, warehouse);  // ← ВАЖНО!
+                warehouse.expanded = false;
             }
         }
 
-        // Удаляем все собранные элементы
-        if (!itemsToRemove.isEmpty()) {
-            // Удаляем с конца, чтобы не сбивались индексы
-            for (int i = items.size() - 1; i >= 0; i--) {
-                if (itemsToRemove.contains(items.get(i))) {
-                    items.remove(i);
-                }
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Рекурсивно сбрасывает состояние expanded у элемента и всех его дочерних элементов.
+     */
+    private void resetExpandedState(StockItem item) {
+        if (item.children == null || item.children.isEmpty()) return;
+
+        for (StockItem child : item.children) {
+            if (child.expanded) {
+                child.expanded = false;
             }
-            notifyDataSetChanged(); // Полное обновление, так как удаляем вразброс
+            // Если дочерний элемент сам может иметь детей (например, Номенклатура имеет Серии)
+            if (child.type == StockItem.TYPE_NOMENCLATURE) {
+                // Если номенклатура была развернута, нужно рекурсивно свернуть ее серии
+                resetExpandedState(child);
+            }
         }
     }
 

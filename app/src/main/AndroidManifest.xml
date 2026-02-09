@@ -15,8 +15,11 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
+
+
 
     <application
             android:icon="@drawable/ic_launcher1"
@@ -64,6 +67,11 @@
                 android:exported="false"/>
 
         <activity
+                android:name=".activity.CarSchemeActivity"
+                android:exported="false"
+                android:label="Каталог схем" />
+
+        <activity
                 android:name=".activity.YandexOAuthActivity"
                 android:theme="@android:style/Theme.Translucent.NoTitleBar"
                 android:exported="false" />
@@ -75,6 +83,16 @@
                 <action android:name="com.xcheng.scanner.action.BARCODE_DECODING_BROADCAST" /> <!-- Проверьте правильный action -->
             </intent-filter>
         </receiver>
+
+        <provider
+                android:name="androidx.core.content.FileProvider"
+                android:authorities="${applicationId}.provider"
+                android:exported="false"
+                android:grantUriPermissions="true">
+            <meta-data
+                    android:name="android.support.FILE_PROVIDER_PATHS"
+                    android:resource="@xml/provider_paths" />
+        </provider>
 
     </application>
 

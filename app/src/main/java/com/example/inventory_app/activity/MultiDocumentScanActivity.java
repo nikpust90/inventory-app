@@ -52,6 +52,7 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
     private ApiService apiService;
     private InventoryItemAdapter adapter;
 
+    private static final String LOG_TAG = "MultiScan";
     // ❌ private InventoryDocument currentDocument; // УДАЛЕНО
 
     // ✅ ДОБАВЛЕНО:
@@ -85,6 +86,9 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
 
         lastScannedBarcode = result.getText();
         lastScanTime = now;
+        // 📝 ЛОГ: Сырой скан
+        RemoteLogger.info(LOG_TAG, "ScanEvent",
+                "Считан штрихкод: " + lastScannedBarcode);
 
         runOnUiThread(() -> processScan(lastScannedBarcode));
     };
@@ -94,6 +98,9 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityDocumentBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        RemoteLogger.info(LOG_TAG, "ActivityLifecycle",
+                "Запуск активности мульти-сканирования");
 
         // Запрос разрешения камеры (без изменений)
         checkCameraPermission();
@@ -114,14 +121,21 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
                 workRequest
         );
 
+        RemoteLogger.info(LOG_TAG, "WorkManager",
+                "Запланирована фоновая задача PendingUploadWorker");
+
         // ⚠️ НАЧАЛО ИЗМЕНЕНИЙ: Загрузка нескольких ID
         ArrayList<String> documentIds = getIntent().getStringArrayListExtra("DOCUMENT_IDS_LIST");
 
         setupRecyclerView(); // Настраиваем RecyclerView (метод без изменений)
 
         if (documentIds != null && !documentIds.isEmpty()) {
+            RemoteLogger.info(LOG_TAG, "Initialization",
+                    "Получен список ID документов: " + documentIds.size());
             loadAllDocuments(documentIds); // ⚠️ Вызываем новый метод
         } else {
+            RemoteLogger.error(LOG_TAG, "Initialization",
+                    "ОШИБКА: Список ID документов пуст или null", null);
             Toast.makeText(this, "ID документов отсутствуют", Toast.LENGTH_SHORT).show();
             finish(); // Закрываем, если нет ID
         }
@@ -143,10 +157,17 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
     //
 
     private void checkCameraPermission() {
+        RemoteLogger.info(LOG_TAG, "PermissionCheck",
+                "Проверка разрешений камеры");
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                RemoteLogger.warn(LOG_TAG, "PermissionCheck",
+                        "Разрешение на камеру отсутствует, запрашиваем");
                 requestPermissions(new String[]{android.Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST);
             } else {
+                RemoteLogger.info(LOG_TAG, "PermissionCheck",
+                        "Разрешение на камеру уже предоставлено");
                 hasCameraPermission = true;
                 initializeScanner();
             }
@@ -161,17 +182,25 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == CAMERA_PERMISSION_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                RemoteLogger.info(LOG_TAG, "PermissionResult",
+                        "Пользователь дал разрешение на камеру");
                 hasCameraPermission = true;
                 initializeScanner();
             } else {
+                RemoteLogger.error(LOG_TAG, "PermissionResult",
+                        "Пользователь ОТКЛОНИЛ разрешение на камеру",null);
                 Toast.makeText(this, "Для сканирования нужны разрешения камеры", Toast.LENGTH_LONG).show();
             }
         }
         // Добавляем обработку для STORAGE_PERMISSION_CODE, если она была в onRequestPermissionsResult
         if (requestCode == STORAGE_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                RemoteLogger.info(LOG_TAG, "PermissionResult",
+                        "Пользователь дал разрешение на хранилище для экспорта");
                 performExport();
             } else {
+                RemoteLogger.warn(LOG_TAG, "PermissionResult",
+                        "Пользователь ОТКЛОНИЛ разрешение на хранилище");
                 Toast.makeText(this, "Нужны разрешения для экспорта БД", Toast.LENGTH_LONG).show();
             }
         }
@@ -179,6 +208,8 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
 
     private void initializeScanner() {
         if (hasCameraPermission) {
+            RemoteLogger.info(LOG_TAG, "ScannerConfig",
+                    "Инициализация сканера ZXing с поддержкой штрихкодов");
             barcodeView = binding.barcodeScanner;
             CameraSettings settings = new CameraSettings();
             settings.setFocusMode(CameraSettings.FocusMode.AUTO);
@@ -202,6 +233,8 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
 
     private void toggleScanner() {
         if (barcodeView.getVisibility() == View.VISIBLE) {
+            RemoteLogger.info(LOG_TAG, "ScannerControl",
+                    "Остановка и скрытие сканера");
             barcodeView.setVisibility(View.GONE);
             barcodeView.pause();
             binding.fabScan.setImageResource(android.R.drawable.ic_menu_camera);
@@ -210,6 +243,8 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
                 checkCameraPermission();
                 return;
             }
+            RemoteLogger.info(LOG_TAG, "ScannerControl",
+                    "Запуск и отображение сканера. Начало декодирования.");
             barcodeView.setVisibility(View.VISIBLE);
             barcodeView.resume();
             barcodeView.decodeContinuous(callback);
@@ -222,6 +257,7 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        RemoteLogger.info(LOG_TAG, "ActivityLifecycle", "onResume: Попытка отправить отложенные данные");
         queueManager.trySendAll();
         if (barcodeView.getVisibility() == View.VISIBLE) {
             barcodeView.resume();
@@ -231,6 +267,7 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        RemoteLogger.info(LOG_TAG, "ActivityLifecycle", "onPause");
         if (barcodeView.isActivated()) {
             barcodeView.pause();
         }
@@ -239,6 +276,7 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if (barcodeView.getVisibility() == View.VISIBLE) {
+            RemoteLogger.info(LOG_TAG, "UserAction", "Закрытие сканера по кнопке Назад");
             toggleScanner();
         } else {
             super.onBackPressed();
@@ -253,9 +291,13 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
 
     // ⚠️ НАЧАЛО ИЗМЕНЕНИЙ: Модифицируем processScan
     private void processScan(String scannedBarcode) {
+        RemoteLogger.info(LOG_TAG, "ScanProcess",
+                "Начало обработки скана: [" + scannedBarcode + "]");
 
         // ⚠️ Проверяем новый список
         if (flatItemList.isEmpty() || scannedBarcode == null || scannedBarcode.trim().isEmpty()) {
+            RemoteLogger.warn(LOG_TAG, "ScanProcess",
+                    "Список товаров пуст. Отмена сканирования.");
             Toast.makeText(this, "Документы не готовы или штрихкод пуст", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -264,6 +306,8 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
         String valueToSearch;
         if (scannedBarcode.toLowerCase().startsWith("http")) {
             valueToSearch = scannedBarcode.length() >= 12 ? scannedBarcode.substring(scannedBarcode.length() - 12) : scannedBarcode;
+            RemoteLogger.info(LOG_TAG, "ScanProcess",
+                    "Штрихкод был URL, обрезан до: " + valueToSearch);
         } else {
             valueToSearch = scannedBarcode;
         }
@@ -282,17 +326,25 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
                     (seriya.getImei() != null && valueToSearch.equals(seriya.getImei()));
 
             if (isMatch) {
+                RemoteLogger.info(LOG_TAG, "ScanMatch",
+                        "Совпадение найдено. Номенклатура: " + item.getNomenklatura().getName() + ", Индекс: " + i);
                 matchingIndices.add(i);
             }
         }
 
         // Анализ результатов поиска (без изменений)
         if (matchingIndices.isEmpty()) {
+            RemoteLogger.warn(LOG_TAG, "ScanResult",
+                    "Ничего не найдено для: " + valueToSearch);
             playErrorSound();
             vibrateError();
         } else if (matchingIndices.size() == 1) {
+            RemoteLogger.info(LOG_TAG, "ScanResult",
+                    "Найдена 1 уникальная позиция.");
             processFoundItem(matchingIndices.get(0));
         } else {
+            RemoteLogger.warn(LOG_TAG, "ScanResult",
+                    "Найдено " + matchingIndices.size() + " дубликатов. Требуется выбор.");
             showNomenclatureChoiceDialog(matchingIndices, valueToSearch);
         }
     }
@@ -308,7 +360,14 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
         // ⚠️ Заменяем currentDocument.getItems() на flatItemList
         InventoryItem item = flatItemList.get(itemIndex);
 
+        String itemName = item.getNomenklatura().getName();
+
+        RemoteLogger.info(LOG_TAG, "ItemAction",
+                "Обработка товара: " + itemName + " (Индекс: " + itemIndex + ")");
+
         if (item.isFound()) {
+            RemoteLogger.warn(LOG_TAG, "ItemAction",
+                    "Повторное сканирование товара: " + itemName);
             Toast.makeText(this, "Повторное сканирование: " + item.getNomenklatura().getName(), Toast.LENGTH_SHORT).show();
             playSuccessSound();
             return;
@@ -329,6 +388,8 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
         builder.setMessage(message);
 
         builder.setPositiveButton("ОК", (dialog, which) -> {
+            RemoteLogger.info(LOG_TAG, "ItemConfirmation",
+                    "Пользователь подтвердил товар. Обновление статуса: " + itemName);
             item.setKolichestvoFakt(1);
             item.setFound(true);
             adapter.notifyItemChanged(itemIndex);
@@ -343,6 +404,8 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
         });
 
         builder.setNegativeButton("Отмена", (dialog, which) -> {
+            RemoteLogger.info(LOG_TAG, "ItemConfirmation",
+                    "Пользователь отменил подтверждение товара: " + itemName);
             dialog.dismiss();
         });
 
@@ -355,6 +418,8 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
      * Он также работает с flatItemList через currentDocument.getItems().
      */
     private void showNomenclatureChoiceDialog(List<Integer> indices, String scannedValue) {
+        RemoteLogger.warn(LOG_TAG, "DialogShow",
+                "Показан диалог выбора для " + indices.size() + " дубликатов");
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Найдено несколько позиций для '" + scannedValue + "'. Выберите нужную:");
 
@@ -368,6 +433,8 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
 
         builder.setItems(nomenclatureNames, (dialog, which) -> {
             int chosenItemIndex = indices.get(which);
+            RemoteLogger.info(LOG_TAG, "DialogSelection",
+                    "Пользователь выбрал позицию под индексом: " + chosenItemIndex);
             processFoundItem(chosenItemIndex);
             dialog.dismiss();
         });
@@ -396,6 +463,8 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
      * Загружает все документы по списку ID и объединяет их товары в один список.
      */
     private void loadAllDocuments(List<String> documentIds) {
+        RemoteLogger.info(LOG_TAG, "APICall",
+                "Начало асинхронной загрузки " + documentIds.size() + " документов");
         // TODO: Показать индикатор загрузки (если нужно)
         // binding.progressBar.setVisibility(View.VISIBLE);
 
@@ -412,11 +481,16 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
                     if (response.isSuccessful() && response.body() != null) {
                         InventoryDocument doc = response.body();
                         loadedDocuments.add(doc); // Сохраняем весь документ
+                        String warehouseName = doc.getWarehouse();
+                        int itemsInDoc = (doc.getItems() != null) ? doc.getItems().size() : 0;
+
+                        RemoteLogger.info(LOG_TAG, "APISuccess",
+                                "Успешно загружен док " + docId + ". Склад: " + warehouseName + ". Позиций: " + itemsInDoc);
 
                         if (doc.getItems() != null) {
                             // ⚠️ ПРЕДПОЛАГАЕМ, что у документа есть имя склада
                             // (Если метод называется иначе, исправьте)
-                            String warehouseName = doc.getWarehouse();
+                            //String warehouseName = doc.getWarehouse();
 
                             // ❌ НЕ ДЕЛАЙТЕ ТАК:
                             // flatItemList.addAll(doc.getItems());
@@ -431,17 +505,23 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
                         }
                     } else {
                         // Ошибка загрузки одного из документов
+                        RemoteLogger.error(LOG_TAG, "APIFailure",
+                                "Ошибка ответа сервера для " + docId + ": " + response.code(),null);
                         Toast.makeText(MultiDocumentScanActivity.this, "Ошибка загрузки док-та " + docId, Toast.LENGTH_SHORT).show();
                     }
 
                     // Проверяем, завершились ли все запросы
                     if (requestsCompleted.incrementAndGet() == requestsToMake) {
+                        RemoteLogger.info(LOG_TAG, "APISummary",
+                                "Все запросы загрузки документов завершены");
                         onAllDocumentsLoaded();
                     }
                 }
 
                 @Override
                 public void onFailure(Call<InventoryDocument> call, Throwable t) {
+                    RemoteLogger.error(LOG_TAG, "APINetworkError",
+                            "Ошибка сети для " + docId + ": " + t.getMessage(),null);
                     Toast.makeText(MultiDocumentScanActivity.this, "Ошибка сети (док-т " + docId + ")", Toast.LENGTH_SHORT).show();
                     // Проверяем, завершились ли все запросы (даже с ошибкой)
                     if (requestsCompleted.incrementAndGet() == requestsToMake) {
@@ -458,10 +538,14 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
      * Обновляет адаптер единым списком.
      */
     private void onAllDocumentsLoaded() {
+        RemoteLogger.info(LOG_TAG, "DataReady",
+                "Данные готовы. Документов: " + loadedDocuments.size() + ", Товаров: " + flatItemList.size());
         // TODO: Скрыть индикатор загрузки
         // binding.progressBar.setVisibility(View.GONE);
 
         if (flatItemList.isEmpty()) {
+            RemoteLogger.warn(LOG_TAG, "DataReady",
+                    "Финальный список товаров пуст");
             Toast.makeText(this, "Не удалось загрузить товары", Toast.LENGTH_LONG).show();
         } else {
             adapter.updateItems(flatItemList);
@@ -536,12 +620,21 @@ public class MultiDocumentScanActivity extends AppCompatActivity {
      * Отправляет ВСЕ загруженные документы в очередь на отправку.
      */
     private void sendAllDocuments() {
+        RemoteLogger.info(LOG_TAG, "UserAction",
+                "Нажата кнопка ОТПРАВИТЬ ВСЕ");
         if (loadedDocuments.isEmpty()) {
+            RemoteLogger.warn(LOG_TAG, "Upload",
+                    "Нет загруженных документов для отправки");
             Toast.makeText(this, "Документы не загружены", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        RemoteLogger.info(LOG_TAG, "Upload",
+                "Отправка " + loadedDocuments.size() + " документов в очередь LocalQueueManager...");
+
         for (InventoryDocument doc : loadedDocuments) {
+            RemoteLogger.info(LOG_TAG, "UploadQueue",
+                    "Добавление документа ID: " + doc.getId() + " в очередь");
             // Так как мы изменяли InventoryItem по ссылке,
             // все изменения (setKolichestvoFakt(1)) уже находятся внутри
             // объектов 'doc' в списке 'loadedDocuments'.

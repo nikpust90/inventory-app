@@ -15,9 +15,9 @@ import java.util.concurrent.TimeUnit;
 
 public class ApiClient {
     //
-    private static final String BASE_URL = "";
-    private static final String USERNAME = "";
-    private static final String PASSWORD = "";
+    private static final String BASE_URL = "http://89.108.72.168/Stavtrack_UNF/hs/";
+    private static final String USERNAME = "ПустоветовН"; // Замените на реальный логин
+    private static final String PASSWORD = "7jusaveZ"; // Замените на реальный пароль
 
 
     public static ApiService getApiService() {
